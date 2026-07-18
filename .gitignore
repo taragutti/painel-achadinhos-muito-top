@@ -14,3 +14,5 @@ coverage/
 apps/web/.env*
 !apps/web/.env.example
 packages/database/generated/
+var/
+**/whatsapp-session/

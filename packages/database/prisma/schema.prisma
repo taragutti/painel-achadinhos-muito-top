@@ -7,9 +7,39 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum PublicationChannel {
-  TELEGRAM
-  WHATSAPP
+enum UserRole {
+  ADMIN
+}
+
+enum Marketplace {
+  AMAZON
+  ALIEXPRESS
+  MAGALU
+  MERCADO_LIVRE
+  SHEIN
+  SHOPEE
+  OTHER
+}
+
+enum PublicationType {
+  PRODUCT
+  ART_LINK
+  FREE_TEXT
+}
+
+enum MessageCategory {
+  SIMPLE
+  LINK
+  NOTICE
+  COUPON
+  INVITATION
+  GROUP_RULES
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
 }
 
 enum PublicationStatus {
@@ -21,43 +51,135 @@ enum PublicationStatus {
   CANCELLED
 }
 
-model Product {
-  id           String        @id @default(cuid())
-  name         String
-  store        String
-  priceCents   Int
-  oldPriceCents Int?
-  affiliateUrl String
-  imageUrl     String?
-  active       Boolean       @default(true)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  publications Publication[]
+enum Platform {
+  TELEGRAM
+  WHATSAPP
 }
 
-model Template {
-  id        String   @id @default(cuid())
-  name      String
-  body      String
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum TemplatePlatform {
+  WHATSAPP
+  TELEGRAM
+  BOTH
+}
+
+enum QueueStatus {
+  ACTIVE
+  PAUSED
+  RUNNING
+  COMPLETED
+  ARCHIVED
+}
+
+enum QueueItemStatus {
+  PENDING
+  SCHEDULED
+  PAUSED
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum DeliveryStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+enum IntegrationType {
+  WHATSAPP
+  TELEGRAM
+}
+
+enum IntegrationStatus {
+  DISCONNECTED
+  WAITING_QR
+  CONNECTING
+  CONNECTED
+  ERROR
+  DISABLED
+}
+
+model User {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  passwordHash String
+  name         String
+  role         UserRole       @default(ADMIN)
+  isActive     Boolean        @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  sessions     AdminSession[]
+  auditLogs    AuditLog[]
+
+  @@index([createdAt])
+}
+
+model Product {
+  id                 String        @id @default(cuid())
+  marketplace        Marketplace   @default(OTHER)
+  sourceUrl          String
+  resolvedUrl        String
+  affiliateUrl       String
+  affiliateConfirmed Boolean       @default(false)
+  title              String
+  description        String        @default("")
+  currentPrice       Decimal?      @db.Decimal(12, 2)
+  oldPrice           Decimal?      @db.Decimal(12, 2)
+  currency           String        @default("BRL") @db.VarChar(3)
+  discountPercentage Int?
+  couponCode         String?
+  storeName          String?
+  originalImageUrl   String?
+  storedImageUrl     String?
+  thumbnailImageUrl  String?
+  status             ProductStatus @default(DRAFT)
+  metadata           Json          @default("{}")
+  legacyActive       Boolean       @default(true) @map("active")
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  deletedAt          DateTime?
+  publications       Publication[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([deletedAt])
 }
 
 model Publication {
-  id           String              @id @default(cuid())
-  productId    String
-  channel      PublicationChannel
-  destination  String
-  renderedText String
-  status       PublicationStatus   @default(DRAFT)
-  scheduledAt  DateTime?
-  publishedAt  DateTime?
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
-  product      Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
-  attempts     PublicationAttempt[]
-  @@index([status, scheduledAt])
+  id              String               @id @default(cuid())
+  idempotencyKey  String               @unique
+  type            PublicationType      @default(PRODUCT)
+  productId       String?
+  title           String?
+  customMessage   String?
+  destinationLink String?
+  mediaUrl        String?
+  couponCode      String?
+  category        MessageCategory?
+  platforms       Platform[]           @default([])
+  templateId      String?
+  metadata        Json                 @default("{}")
+  legacyPlatform  Platform?            @map("channel")
+  status          PublicationStatus    @default(DRAFT)
+  scheduledAt     DateTime?
+  publishedAt     DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  deletedAt       DateTime?
+  product         Product?             @relation(fields: [productId], references: [id], onDelete: SetNull)
+  template        MessageTemplate?     @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  attempts        PublicationAttempt[]
+  queueItems      QueueItem[]
+
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@index([templateId])
 }
 
 model PublicationAttempt {
@@ -68,12 +190,193 @@ model PublicationAttempt {
   externalId    String?
   response      String?
   createdAt     DateTime    @default(now())
-  publication   Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  publication   Publication @relation(fields: [publicationId], references: [id], onDelete: Restrict)
+
   @@index([publicationId, createdAt])
+}
+
+model Channel {
+  id                  String        @id @default(cuid())
+  platform            Platform
+  name                String
+  externalIdEncrypted String?       @map("externalId")
+  isActive            Boolean       @default(true)
+  isDefault           Boolean       @default(false)
+  metadata            Json          @default("{}")
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  queueTargets        QueueTarget[]
+  deliveries          Delivery[]
+
+  @@index([platform, isActive])
+  @@index([createdAt])
+}
+
+model MessageTemplate {
+  id           String           @id @default(cuid())
+  name         String
+  platform     TemplatePlatform @default(BOTH)
+  content      String
+  isDefault    Boolean          @default(false)
+  isActive     Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  publications Publication[]
+
+  @@index([platform, isActive])
+  @@index([createdAt])
+}
+
+model PublishingQueue {
+  id                  String        @id @default(cuid())
+  name                String
+  status              QueueStatus   @default(PAUSED)
+  intervalMinutes     Int           @default(30)
+  itemsPerBatch       Int           @default(1)
+  secondsBetweenItems Int           @default(30)
+  dailyStartTime      String?       @db.VarChar(5)
+  dailyEndTime        String?       @db.VarChar(5)
+  timezone            String        @default("America/Sao_Paulo")
+  nextRunAt           DateTime?
+  startsAt            DateTime?
+  repeatEnabled       Boolean       @default(false)
+  repeatCooldownHours Int           @default(24)
+  lockToken           String?
+  lockedAt            DateTime?
+  startedAt           DateTime?
+  pausedAt            DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  items               QueueItem[]
+  targets             QueueTarget[]
+
+  @@index([status])
+  @@index([nextRunAt])
+  @@index([lockedAt])
+  @@index([createdAt])
+}
+
+model QueueItem {
+  id             String          @id @default(cuid())
+  queueId        String
+  publicationId  String
+  position       Int
+  status         QueueItemStatus @default(PENDING)
+  scheduledFor   DateTime?
+  attempts       Int             @default(0)
+  priority       Int             @default(0)
+  availableAt    DateTime?
+  lastPublishedAt DateTime?
+  lastError      String?
+  idempotencyKey String          @unique
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  queue          PublishingQueue @relation(fields: [queueId], references: [id], onDelete: Restrict)
+  publication    Publication     @relation(fields: [publicationId], references: [id], onDelete: Restrict)
+  deliveries     Delivery[]
+
+  @@unique([queueId, position])
+  @@index([status])
+  @@index([scheduledFor])
+  @@index([position])
+  @@index([priority, position])
+  @@index([availableAt])
+  @@index([createdAt])
+}
+
+model QueueTarget {
+  id        String          @id @default(cuid())
+  queueId   String
+  channelId String
+  createdAt DateTime        @default(now())
+  queue     PublishingQueue @relation(fields: [queueId], references: [id], onDelete: Restrict)
+  channel   Channel         @relation(fields: [channelId], references: [id], onDelete: Restrict)
+
+  @@unique([queueId, channelId])
+  @@index([createdAt])
+}
+
+model Delivery {
+  id                String         @id @default(cuid())
+  queueItemId       String
+  channelId         String
+  status            DeliveryStatus @default(PENDING)
+  providerMessageId String?
+  attemptNumber     Int            @default(1)
+  startedAt         DateTime       @default(now())
+  completedAt       DateTime?
+  errorCode         String?
+  errorMessage      String?
+  idempotencyKey    String         @unique
+  messageSnapshot   String
+  mediaUrlSnapshot  String?
+  createdAt         DateTime       @default(now())
+  queueItem         QueueItem      @relation(fields: [queueItemId], references: [id], onDelete: Restrict)
+  channel           Channel        @relation(fields: [channelId], references: [id], onDelete: Restrict)
+
+  @@unique([queueItemId, channelId, attemptNumber])
+  @@index([queueItemId, channelId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Integration {
+  id                   String            @id @default(cuid())
+  type                 IntegrationType   @unique
+  status               IntegrationStatus @default(DISCONNECTED)
+  encryptedCredentials String?
+  lastConnectionAt     DateTime?
+  lastHeartbeatAt      DateTime?
+  lastError            String?
+  displayName          String?
+  metadata             Json              @default("{}")
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String?
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([entityType, entityId])
+  @@index([createdAt])
 }
 
 model AppSetting {
   key       String   @id
   value     Json
   updatedAt DateTime @updatedAt
+}
+
+model AdminSession {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  lastSeenAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, expiresAt])
+  @@index([expiresAt])
+}
+
+model LoginThrottle {
+  key            String    @id
+  failedAttempts Int       @default(0)
+  firstAttemptAt DateTime
+  blockedUntil   DateTime?
+  updatedAt      DateTime  @updatedAt
+
+  @@index([blockedUntil])
 }

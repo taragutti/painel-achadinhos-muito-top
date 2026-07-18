@@ -1,0 +1,5 @@
+import { queueInputSchema } from "@achadinhos/shared";
+import { NextResponse } from "next/server";
+import { getAuthenticatedAdmin } from "@/lib/auth/session"; import { hasValidRequestOrigin } from "@/lib/auth/request"; import { createQueue, queueWorkspace } from "@/lib/queues/application";
+export async function GET() { if (!await getAuthenticatedAdmin()) return NextResponse.json({ error: "Não autorizado." }, { status: 401 }); return NextResponse.json(await queueWorkspace()); }
+export async function POST(request: Request) { if (!await getAuthenticatedAdmin()) return NextResponse.json({ error: "Não autorizado." }, { status: 401 }); if (!hasValidRequestOrigin(request)) return NextResponse.json({ error: "Origem inválida." }, { status: 403 }); try { const input = queueInputSchema.parse(await request.json()); const queue = await createQueue({ ...input, startsAt: input.startsAt ? new Date(input.startsAt) : undefined }); return NextResponse.json({ queue }, { status: 201 }); } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Não foi possível criar a fila." }, { status: 400 }); } }

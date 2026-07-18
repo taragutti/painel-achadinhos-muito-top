@@ -9,6 +9,7 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "test": "turbo test",
+    "lint": "npm run lint --workspace=@achadinhos/web",
     "typecheck": "turbo typecheck",
     "db:generate": "npm run generate --workspace=@achadinhos/database",
     "db:migrate": "npm run migrate:dev --workspace=@achadinhos/database",
