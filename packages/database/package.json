@@ -1,0 +1,9 @@
+{
+  "name": "@achadinhos/database", "version": "0.1.0", "private": true, "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "generate": "prisma generate", "migrate:dev": "prisma migrate dev", "build": "prisma generate && tsc -p tsconfig.json", "typecheck": "tsc --noEmit", "test": "node --test"
+  },
+  "dependencies": { "@prisma/client": "^6.16.3" },
+  "devDependencies": { "prisma": "^6.16.3", "typescript": "^5.9.3" }
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "tasks": {
+    "build": { "dependsOn": ["^build"], "outputs": ["dist/**", ".next/**", ".vinext/**"] },
+    "test": { "dependsOn": ["build"], "outputs": [] },
+    "typecheck": { "dependsOn": ["^build"], "outputs": [] },
+    "dev": { "cache": false, "persistent": true },
+    "generate": { "cache": false },
+    "migrate:dev": { "cache": false }
+  }
+}

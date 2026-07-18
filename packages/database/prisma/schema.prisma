@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PublicationChannel {
+  TELEGRAM
+  WHATSAPP
+}
+
+enum PublicationStatus {
+  DRAFT
+  QUEUED
+  PROCESSING
+  PUBLISHED
+  FAILED
+  CANCELLED
+}
+
+model Product {
+  id           String        @id @default(cuid())
+  name         String
+  store        String
+  priceCents   Int
+  oldPriceCents Int?
+  affiliateUrl String
+  imageUrl     String?
+  active       Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  publications Publication[]
+}
+
+model Template {
+  id        String   @id @default(cuid())
+  name      String
+  body      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Publication {
+  id           String              @id @default(cuid())
+  productId    String
+  channel      PublicationChannel
+  destination  String
+  renderedText String
+  status       PublicationStatus   @default(DRAFT)
+  scheduledAt  DateTime?
+  publishedAt  DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  product      Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  attempts     PublicationAttempt[]
+  @@index([status, scheduledAt])
+}
+
+model PublicationAttempt {
+  id            String      @id @default(cuid())
+  publicationId String
+  provider      String
+  success       Boolean
+  externalId    String?
+  response      String?
+  createdAt     DateTime    @default(now())
+  publication   Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  @@index([publicationId, createdAt])
+}
+
+model AppSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
