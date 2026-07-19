@@ -108,6 +108,12 @@ export const messageTemplateInputSchema = z.object({
 export const channelSchema = z.enum(["telegram", "whatsapp", "mock"]);
 export type Channel = z.infer<typeof channelSchema>;
 
+export const channelInputSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  platform: z.enum(["WHATSAPP", "TELEGRAM"]),
+});
+export type ChannelInput = z.infer<typeof channelInputSchema>;
+
 export const publicationPayloadSchema = z.object({
   publicationId: z.string().min(1),
   idempotencyKey: z.string().min(16).max(128),

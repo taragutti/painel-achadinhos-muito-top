@@ -1,3 +1,7 @@
-import { SectionPage } from "@/components/ui/SectionPage";
-import { requireAuthenticatedAdmin } from "@/lib/auth/session";
-export default async function ChannelsPage() { await requireAuthenticatedAdmin(); return <SectionPage title="Canais" description="Gerencie os destinos de WhatsApp e Telegram." icon="◎" emptyTitle="Nenhum canal conectado" emptyDescription="As conexões externas continuam desativadas nesta fase." />; }
+import { ChannelManager } from "@/components/channels/ChannelManager";
+import { listChannels } from "@/lib/channels/application";
+
+export default async function ChannelsPage() {
+  const channels = await listChannels();
+  return <ChannelManager channels={channels.map(({ id, name, platform, isActive }) => ({ id, name, platform, isActive }))} />;
+}
