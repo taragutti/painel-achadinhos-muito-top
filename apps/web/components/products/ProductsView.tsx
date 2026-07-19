@@ -126,19 +126,7 @@ export function ProductsView({
           {initialProducts.map((product) => (
             <article className="product-row content-card" key={product.id}>
               <div className="product-row-image">
-                {product.thumbnailImageUrl || product.storedImageUrl || product.originalImageUrl ? (
-                  <Image
-                    src={
-                      product.thumbnailImageUrl || product.storedImageUrl || product.originalImageUrl || ""
-                    }
-                    alt=""
-                    fill
-                    sizes="72px"
-                    unoptimized
-                  />
-                ) : (
-                  "◇"
-                )}
+                <ProductImage product={product} />
               </div>
               <div className="product-row-main">
                 <div className="row-badges">
@@ -240,6 +228,25 @@ export function ProductsView({
         />
       )}
     </main>
+  );
+}
+
+function ProductImage({ product }: { product: ProductRow }) {
+  const sources = [...new Set([product.thumbnailImageUrl, product.storedImageUrl, product.originalImageUrl].filter((source): source is string => Boolean(source)))];
+  const [sourceIndex, setSourceIndex] = useState(0);
+  const source = sources[sourceIndex];
+
+  if (!source) return <>◇</>;
+  return (
+    <Image
+      key={source}
+      src={source}
+      alt={`Imagem de ${product.title}`}
+      fill
+      sizes="72px"
+      unoptimized
+      onError={() => setSourceIndex((current) => current + 1)}
+    />
   );
 }
 
