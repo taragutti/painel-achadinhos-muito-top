@@ -35,6 +35,7 @@ Missing, malformed, or different values must select mock behavior or fail closed
 - Global pause and queue pause are checked before claiming work and again between channel deliveries.
 - Return stable error codes and safe Portuguese messages; keep internal causes redacted.
 - URL imports allow only HTTP(S), validate every redirect, block local/private addresses and cap time, redirects and response size. DNS rebinding remains a residual risk until outbound traffic is forced through a network proxy that blocks private ranges after connection.
+- The Shopee API adapter accepts only the official HTTPS GraphQL host. Its application secret is used solely to sign requests on the server; credentials, signatures and authorization headers are never logged or returned to the browser. Provider failures are converted into stable, sanitized error codes.
 - Uploads are checked by byte signature and decoded with Sharp before being converted to owned WebP files. Production must replace ephemeral local disk with private durable object storage and signed delivery URLs.
 - React escaping and a restrictive CSP reduce XSS exposure. Templates are interpreted by a fixed variable/conditional renderer and never evaluated as code.
 - State-changing routes verify same-origin requests. Production requests without a valid `Origin` are rejected; HTTP-only `SameSite=Lax` session cookies add a second CSRF boundary.

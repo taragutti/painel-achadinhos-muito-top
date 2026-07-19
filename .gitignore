@@ -5,6 +5,7 @@ dist/
 .vinext/
 .wrangler/
 coverage/
+graphify-out/
 .DS_Store
 *.log
 *.tsbuildinfo

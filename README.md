@@ -31,6 +31,12 @@ O dashboard é uma aplicação Next.js para um único administrador. Todas as p�
 
 O endpoint `GET /api/health` exige `Authorization: Bearer <APP_HEALTH_TOKEN>` e verifica a conectividade com o banco sem retornar detalhes de credenciais.
 
+### Importação da Shopee
+
+O importador resolve o link informado pelo administrador, identifica produto e loja e complementa os metadados pela API oficial de Afiliados da Shopee. A assinatura é calculada somente no servidor e nenhuma credencial retorna ao navegador.
+
+Configure `SHOPEE_APP_ID`, `SHOPEE_APP_SECRET` e `SHOPEE_API_BASE_URL`. `SHOPEE_AFFILIATE_ID` permanece disponível para recursos vinculados à conta. O endpoint suportado é `https://open-api.affiliate.shopee.com.br/graphql`.
+
 ## Worker
 
 O worker é um processo Node.js permanente, separado da web, com acesso ao PostgreSQL e diretório persistente para a sessão do WhatsApp. `GET /health` na porta configurada exige `WORKER_HEALTH_TOKEN` e expõe heartbeat, identificação da execução, último processamento e contadores básicos.
