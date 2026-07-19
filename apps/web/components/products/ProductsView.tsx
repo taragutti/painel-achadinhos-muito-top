@@ -16,6 +16,7 @@ type ProductRow = {
   oldPrice: string | null;
   thumbnailImageUrl: string | null;
   storedImageUrl: string | null;
+  originalImageUrl: string | null;
   affiliateConfirmed: boolean;
   createdAt: string;
   lastPublishedAt: string | null;
@@ -125,10 +126,10 @@ export function ProductsView({
           {initialProducts.map((product) => (
             <article className="product-row content-card" key={product.id}>
               <div className="product-row-image">
-                {product.thumbnailImageUrl || product.storedImageUrl ? (
+                {product.thumbnailImageUrl || product.storedImageUrl || product.originalImageUrl ? (
                   <Image
                     src={
-                      product.thumbnailImageUrl || product.storedImageUrl || ""
+                      product.thumbnailImageUrl || product.storedImageUrl || product.originalImageUrl || ""
                     }
                     alt=""
                     fill

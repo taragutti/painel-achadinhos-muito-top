@@ -47,24 +47,27 @@ export function ProductImporterForm({ productId, initialProduct }: { productId?:
   }
 
   async function ensureOwnedImage(current: ProductSaveInput) {
-    if (current.storedImageUrl || !current.originalImageUrl) return current;
+    if (current.storedImageUrl || !current.originalImageUrl) return { product: current, copyFailed: false };
     const form = new FormData(); form.set("remoteUrl", current.originalImageUrl);
     const response = await fetch("/api/products/images", { method: "POST", body: form });
     const data = await response.json() as { storedImageUrl?: string; thumbnailImageUrl?: string };
-    return response.ok && data.storedImageUrl ? { ...current, storedImageUrl: data.storedImageUrl, thumbnailImageUrl: data.thumbnailImageUrl } : current;
+    return response.ok && data.storedImageUrl
+      ? { product: { ...current, storedImageUrl: data.storedImageUrl, thumbnailImageUrl: data.thumbnailImageUrl }, copyFailed: false }
+      : { product: current, copyFailed: true };
   }
 
   async function save(intent: "DRAFT" | "QUEUE") {
     setBusy("save"); setMessage(null);
     try {
-      const withImage = await ensureOwnedImage(product);
+      const { product: withImage, copyFailed } = await ensureOwnedImage(product);
       const parsed = productSaveInputSchema.safeParse(withImage);
       if (!parsed.success) throw new Error("Revise os campos obrigatórios e os valores informados.");
       const response = await fetch(productId ? `/api/products/${productId}` : "/api/products", { method: productId ? "PUT" : "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ product: parsed.data, intent }) });
       const data = await response.json() as { queued?: boolean; warning?: string; error?: string };
       if (!response.ok) throw new Error(data.error ?? "Não foi possível salvar.");
       setProduct(withImage);
-      setMessage({ kind: "success", text: data.warning ?? (data.queued ? "Produto salvo e adicionado à fila." : productId ? "Produto atualizado." : "Produto salvo como rascunho.") });
+      const savedMessage = data.warning ?? (data.queued ? "Produto salvo e adicionado à fila." : productId ? "Produto atualizado." : "Produto salvo como rascunho.");
+      setMessage({ kind: copyFailed ? "error" : "success", text: copyFailed ? `${savedMessage} A foto está sendo exibida pela origem e ainda precisa ser copiada para o armazenamento próprio.` : savedMessage });
     } catch (error) { setMessage({ kind: "error", text: error instanceof Error ? error.message : "Não foi possível salvar." }); }
     finally { setBusy(null); }
   }
