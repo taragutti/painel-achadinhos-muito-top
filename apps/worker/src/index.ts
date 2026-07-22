@@ -24,6 +24,10 @@ const prisma = getPrisma();
 const queues = new QueueRepository(prisma);
 const deliveries = new DeliveryRepository(prisma);
 const workerStates = new WorkerStateRepository(prisma);
+const whatsappConnector = new WorkerWhatsAppConnector(
+  process.env.WHATSAPP_SESSION_DIR ?? "../../var/whatsapp-session",
+  process.env.WHATSAPP_ALLOWED_GROUP_ID ?? "",
+);
 const startedAt = new Date().toISOString();
 const state: WorkerHealthState = {
   runId: randomUUID(),
@@ -50,13 +54,10 @@ function providerFor(
     );
   if (platform === "TELEGRAM")
     return createTelegramProvider(process.env, safeLogger);
-  const connector = new WorkerWhatsAppConnector(
-    process.env.WHATSAPP_SESSION_DIR ?? "../../var/whatsapp-session",
-    process.env.WHATSAPP_ALLOWED_GROUP_ID ?? "",
-  );
+  const selectedGroupId = whatsappConnector.getSelectedGroup()?.groupId ?? "";
   return new WhatsAppMessagingProvider(
-    connector,
-    process.env.WHATSAPP_ALLOWED_GROUP_ID ?? "",
+    whatsappConnector,
+    selectedGroupId,
     safeLogger,
   );
 }
@@ -137,7 +138,7 @@ async function deliverItem(now: Date) {
       provider.platform === "MOCK"
         ? "mock-group"
         : target.channel.platform === "WHATSAPP"
-          ? (process.env.WHATSAPP_ALLOWED_GROUP_ID ?? "")
+          ? (whatsappConnector.getSelectedGroup()?.groupId ?? "")
           : (process.env.TELEGRAM_GROUP_ID ?? "");
     const input = { destination, text, idempotencyKey };
     const result = item.publication.mediaUrl
@@ -198,8 +199,17 @@ safeLogger.info("worker.started", {
 startHealthServer(
   state,
   process.env.WORKER_HEALTH_TOKEN,
-  Number(process.env.WORKER_HEALTH_PORT ?? 9464),
+  process.env.WORKER_API_TOKEN,
+  whatsappConnector,
+  Number(process.env.PORT ?? process.env.WORKER_HEALTH_PORT ?? 9464),
   process.env.WORKER_HEALTH_HOST ?? "127.0.0.1",
 );
+if (process.env.WHATSAPP_ENABLED === "true") {
+  void whatsappConnector.connect().catch((error) => {
+    safeLogger.error("whatsapp.start.failed", {
+      errorType: error instanceof Error ? error.name : "UnknownError",
+    });
+  });
+}
 void tick();
 setInterval(() => void tick(), interval);

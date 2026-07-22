@@ -32,6 +32,8 @@ Stop the worker, take and verify a restorable PostgreSQL backup, review every ve
 
 Configure the web workspace build, `DATABASE_URL`, `APP_URL`, administrator/session variables, `APP_ENCRYPTION_KEY`, `APP_HEALTH_TOKEN`, `DEMO_MODE=true`, `SEND_LIVE=false` and durable image storage. Do not place the WhatsApp client, session files or permanent queue loop in Vercel Functions. Restrict dashboard ingress with an additional access layer when possible.
 
+Configure `WORKER_API_URL` and the same strong `WORKER_API_TOKEN` in Vercel and in the worker host. The worker must expose its configured `PORT` over HTTPS, bind to `0.0.0.0`, and mount `WHATSAPP_SESSION_DIR` on a persistent private volume. Never mount that directory in the web deployment or commit its contents.
+
 ## Permanent worker
 
 Use a supervised Node.js process or container with restart-on-failure, graceful termination, PostgreSQL access and a persistent volume for `WHATSAPP_SESSION_DIR`. Bind health to a private interface, configure a unique token, ship structured logs, alert on stale heartbeat, and deploy only one new worker revision at a time. Database locks and idempotency protect overlap, but rolling overlap should remain brief.

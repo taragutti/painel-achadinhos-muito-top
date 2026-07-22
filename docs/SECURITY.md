@@ -12,6 +12,8 @@ The system is private and single-administrator, but every server boundary still 
 - Rotate a credential immediately if it enters source control, logs, screenshots, or chat.
 - Stored integration credentials use AES-256-GCM with server-only `APP_ENCRYPTION_KEY`. An empty edit field preserves the previous ciphertext, and browser responses expose only whether configuration exists.
 - WhatsApp session data lives under ignored `WHATSAPP_SESSION_DIR`. Only the exact `WHATSAPP_ALLOWED_GROUP_ID` ending in `@g.us` is accepted; contacts and unregistered groups are rejected.
+- Worker control routes require a separate `WORKER_API_TOKEN` of at least 24 characters. Configure `WORKER_API_URL` with HTTPS in production. The QR value, authorization header and session files must never enter logs or database audit metadata.
+- The Baileys connector is unofficial. Its file-based auth state is acceptable only for this single-account MVP on a private persistent volume; migrate auth keys to an encrypted database store before operating multiple accounts or workers.
 
 ## Live-delivery interlock
 

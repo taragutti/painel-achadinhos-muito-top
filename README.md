@@ -41,6 +41,8 @@ Configure `SHOPEE_APP_ID`, `SHOPEE_APP_SECRET` e `SHOPEE_API_BASE_URL`. `SHOPEE_
 
 O worker é um processo Node.js permanente, separado da web, com acesso ao PostgreSQL e diretório persistente para a sessão do WhatsApp. `GET /health` na porta configurada exige `WORKER_HEALTH_TOKEN` e expõe heartbeat, identificação da execução, último processamento e contadores básicos.
 
+O menu **Grupos** conversa com o worker por HTTPS usando `WORKER_API_URL` e `WORKER_API_TOKEN`. O navegador nunca recebe esse token nem os arquivos da sessão: recebe somente o QR temporário convertido em imagem, o estado sanitizado e os nomes dos grupos. A conexão por QR usa um cliente não oficial do WhatsApp e pode sofrer desconexões ou bloqueios; `SEND_LIVE=false` continua impedindo publicações reais.
+
 ## Banco de dados
 
 Use somente migrations Prisma versionadas. Em desenvolvimento, `db:migrate` cria/aplica migrations após revisão. Em produção, faça backup verificável e use `prisma migrate deploy`. Nunca execute `prisma db push`, `prisma migrate reset` ou apague histórico.

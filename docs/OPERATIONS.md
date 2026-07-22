@@ -12,6 +12,8 @@ Build with `npm run build --workspace=@achadinhos/web` and start with `npm run s
 
 Build with `npm run build --workspace=@achadinhos/worker` and supervise `node apps/worker/dist/index.js`. Provide PostgreSQL, mock/provider flags, poll/lock settings, the worker health token and a persistent WhatsApp session directory. Monitor heartbeat age and alert before two minutes. A restart generates a new run ID; locked work becomes eligible after the lease and completed deliveries remain protected by idempotency.
 
+For QR connection, set `WHATSAPP_ENABLED=true`, `WORKER_API_TOKEN`, `WORKER_HEALTH_TOKEN`, `WORKER_HEALTH_HOST=0.0.0.0` and the platform-provided `PORT`. Keep `SEND_LIVE=false`, open **Grupos**, generate the QR, scan it and authorize exactly one group. Confirm the group name before any later one-message live test.
+
 For an update: pause all queues, wait for current provider calls to finish, stop the old process, apply reviewed migrations, start one new process in demo mode, check health and a mock delivery, then resume. To disconnect or revoke WhatsApp, use the audited controls and preserve logs; revocation intentionally invalidates the stored session.
 
 ## Database runbook

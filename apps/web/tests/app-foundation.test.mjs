@@ -65,3 +65,19 @@ test("keeps operational controls and destructive confirmations visible", async (
   assert.match(products, /duplicate|duplicar/i);
   assert.match(publications, /Publicar em teste/i);
 });
+
+test("keeps WhatsApp QR control server-side and live delivery disabled", async () => {
+  const [route, application, manager, worker] = await Promise.all([
+    readFile(new URL("api/whatsapp/[action]/route.ts", appRoot), "utf8"),
+    readFile(new URL("../lib/whatsapp/application.ts", appRoot), "utf8"),
+    readFile(new URL("../components/channels/ChannelManager.tsx", appRoot), "utf8"),
+    readFile(new URL("../../worker/src/whatsapp-connector.ts", appRoot), "utf8"),
+  ]);
+  assert.match(route, /getAuthenticatedAdmin/);
+  assert.match(route, /hasValidRequestOrigin/);
+  assert.match(application, /WORKER_API_TOKEN/);
+  assert.match(application, /QRCode\.toDataURL/);
+  assert.doesNotMatch(manager, /WORKER_API_TOKEN|WHATSAPP_SESSION/);
+  assert.match(worker, /SEND_LIVE !== "true"/);
+  assert.match(worker, /endsWith\("@g\.us"\)/);
+});

@@ -34,6 +34,8 @@ Owns `PublicationProvider` adapters. Mock is the default. Telegram and WhatsApp 
 
 The current messaging contract is `MessagingProvider`. Its factory forces mock unless `SEND_LIVE=true` and `MOCK_PROVIDERS=false`. Telegram HTTP concerns remain inside its adapter. WhatsApp runs only in `apps/worker`: a replaceable connector owns QR, persistent session, group discovery and heartbeat, while the web app reads only sanitized status.
 
+The web server reaches the worker control endpoints over HTTPS with a dedicated bearer token. The browser calls only authenticated same-origin Next.js routes; those routes convert the transient QR payload into a data image and never expose the worker token or session credentials. The selected group identifier is persisted encrypted in PostgreSQL and in the worker's protected persistent session volume. Private contacts and every unselected group are rejected.
+
 Product marketplace access is isolated in `MarketplaceImporter` implementations. The Shopee adapter signs the exact GraphQL payload on the server, queries `productOfferV2` by product and shop identifiers, and can request an official affiliate short link. Public Open Graph metadata remains a non-blocking fallback when the API is unavailable or does not return the requested product.
 
 The worker creates one `Delivery` for each queue item, channel and attempt. Its idempotency key combines the stable queue item key and channel; successful deliveries are not repeated and retries stop at `DELIVERY_MAX_ATTEMPTS`.
