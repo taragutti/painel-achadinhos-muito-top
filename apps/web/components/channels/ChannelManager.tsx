@@ -26,7 +26,7 @@ export function ChannelManager({ channels }: { channels: ChannelRow[] }) {
 
   return (
     <main className="page-content">
-      <header className="page-heading"><div><span className="eyebrow">PAINEL ACHADINHOS</span><h1>Canais</h1><p>Gerencie os destinos de WhatsApp e Telegram.</p></div></header>
+      <header className="page-heading"><div><span className="eyebrow">WHATSAPP</span><h1>Grupos</h1><p>Conecte o WhatsApp e escolha o único grupo autorizado.</p></div></header>
       {message && <p className="form-message warning" role="status">{message}</p>}
       <section className="content-card">
         {channels.length ? channels.map((channel) => (

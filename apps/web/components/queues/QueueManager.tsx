@@ -74,14 +74,14 @@ export function QueueManager({
   const [draggedId, setDraggedId] = useState("");
   const selected = queues.find((queue) => queue.id === selectedId);
   const [form, setForm] = useState({
-    name: "",
-    channelIds: [] as string[],
+    name: "Fila principal",
+    channelIds: channels.filter((channel) => channel.platform === "WHATSAPP").slice(0, 1).map((channel) => channel.id),
     startsAt: "",
     dailyStartTime: "08:00",
-    dailyEndTime: "22:00",
+    dailyEndTime: "21:30",
     itemsPerBatch: 1,
-    intervalMinutes: 10,
-    customInterval: 10,
+    intervalMinutes: 20,
+    customInterval: 20,
     secondsBetweenItems: 30,
     repeatEnabled: false,
     repeatCooldownHours: 24,

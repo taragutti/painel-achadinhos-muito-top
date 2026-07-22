@@ -26,7 +26,7 @@ export function AppShell({ adminName, children }: { adminName: string; children:
           <span className="nav-label">MENU PRINCIPAL</span>
           {navigation.map(item => {
             const active = item.href === "/dashboard" ? pathname === item.href : pathname.startsWith(item.href);
-            return <Link key={item.href} href={item.href} className={active ? "active" : ""} onClick={() => setOpen(false)}><i>{item.icon}</i><span>{item.label}</span>{"badge" in item && <b>{item.badge}</b>}</Link>;
+            return <Link key={item.href} href={item.href} className={active ? "active" : ""} onClick={() => setOpen(false)}><i>{item.icon}</i><span>{item.label}</span></Link>;
           })}
         </nav>
         <div className="sidebar-status"><span className="status-dot"/><div><strong>Modo seguro</strong><small>Envios externos desativados</small></div></div>
