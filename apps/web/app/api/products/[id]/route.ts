@@ -36,10 +36,16 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     const product = await products.findById(id);
     if (!product) return NextResponse.json({ error: "Produto não encontrado." }, { status: 404 });
     if (body?.action === "publication" || body?.action === "queue") {
-      const publication = await new PublicationService(new PublicationRepository(prisma)).create({ type: "PRODUCT", productId: id, title: product.title, platforms: ["WHATSAPP", "TELEGRAM"] });
-      if (body.action === "publication") return NextResponse.json({ publication });
+      const existingPublication = await prisma.publication.findFirst({
+        where: { productId: id, deletedAt: null, status: { not: "CANCELLED" } },
+        orderBy: { createdAt: "desc" },
+      });
+      const publication = existingPublication ?? await new PublicationService(new PublicationRepository(prisma)).create({ type: "PRODUCT", productId: id, title: product.title, platforms: ["WHATSAPP", "TELEGRAM"] });
+      if (body.action === "publication") return NextResponse.json({ publication, warning: existingPublication ? "Este produto já possui uma publicação." : undefined });
       const queue = await prisma.publishingQueue.findFirst({ where: { status: { in: ["ACTIVE", "PAUSED"] } }, orderBy: { createdAt: "asc" } });
       if (!queue) return NextResponse.json({ publication, warning: "Publicação criada, mas nenhuma fila está configurada." });
+      const existingItem = await prisma.queueItem.findFirst({ where: { queueId: queue.id, publicationId: publication.id, status: { in: ["PENDING", "SCHEDULED", "PROCESSING", "PAUSED"] } } });
+      if (existingItem) return NextResponse.json({ publication, item: existingItem, warning: "Esta publicação já está na fila." });
       return NextResponse.json({ publication, item: await new QueueService(new QueueRepository(prisma)).enqueue(queue.id, publication.id) });
     }
     return NextResponse.json({ error: "Ação inválida." }, { status: 400 });

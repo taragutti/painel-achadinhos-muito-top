@@ -12,5 +12,5 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   const marketplace = ["SHOPEE", "MERCADO_LIVRE", "OTHER"].includes(String(query.marketplace)) ? query.marketplace as Marketplace : undefined;
   const status = ["DRAFT", "ACTIVE", "ARCHIVED"].includes(String(query.status)) ? query.status as ProductStatus : undefined;
   const products = await listProducts({ search, marketplace, status });
-  return <ProductsView initialProducts={products.map((product) => ({ ...product, currentPrice: product.currentPrice?.toString() ?? null, oldPrice: product.oldPrice?.toString() ?? null, metadata: undefined, createdAt: product.createdAt.toISOString(), lastPublishedAt: product.publications[0]?.publishedAt?.toISOString() ?? null }))} />;
+  return <ProductsView initialProducts={products.map((product) => ({ ...product, hasPublication: product._count.publications > 0, _count: undefined, currentPrice: product.currentPrice?.toString() ?? null, oldPrice: product.oldPrice?.toString() ?? null, metadata: undefined, createdAt: product.createdAt.toISOString(), lastPublishedAt: product.publications[0]?.publishedAt?.toISOString() ?? null }))} />;
 }

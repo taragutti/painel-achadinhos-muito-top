@@ -18,6 +18,7 @@ type ProductRow = {
   storedImageUrl: string | null;
   originalImageUrl: string | null;
   affiliateConfirmed: boolean;
+  hasPublication: boolean;
   createdAt: string;
   lastPublishedAt: string | null;
 };
@@ -166,9 +167,9 @@ export function ProductsView({
               <div className="row-actions">
                 <button
                   onClick={() => void action(product.id, "publication")}
-                  disabled={busy !== null}
+                  disabled={busy !== null || product.hasPublication}
                 >
-                  Criar publicação
+                  {product.hasPublication ? "Publicação criada ✓" : "Criar publicação"}
                 </button>
                 <button
                   onClick={() => void action(product.id, "queue")}

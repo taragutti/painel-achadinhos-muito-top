@@ -25,7 +25,10 @@ export class ProductRepository {
           { couponCode: { contains: filters.search, mode: "insensitive" } },
         ] : undefined,
       },
-      include: { publications: { where: { publishedAt: { not: null } }, orderBy: { publishedAt: "desc" }, take: 1, select: { publishedAt: true } } },
+      include: {
+        publications: { where: { publishedAt: { not: null } }, orderBy: { publishedAt: "desc" }, take: 1, select: { publishedAt: true } },
+        _count: { select: { publications: { where: { deletedAt: null, status: { not: "CANCELLED" } } } } },
+      },
       orderBy: { createdAt: "desc" },
     });
   }
