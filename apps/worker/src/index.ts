@@ -1,9 +1,11 @@
 import {
   DeliveryRepository,
+  disconnectPrisma,
   getPrisma,
   QueueRepository,
   WorkerStateRepository,
 } from "@achadinhos/database";
+import type { Server } from "node:http";
 import { randomUUID } from "node:crypto";
 import {
   createTelegramProvider,
@@ -12,12 +14,14 @@ import {
   WhatsAppMessagingProvider,
   type MessagingProvider,
 } from "@achadinhos/providers";
-import { nextAllowedTime } from "@achadinhos/shared";
+import { buildProductMessage, nextAllowedTime } from "@achadinhos/shared";
 import { safeLogger } from "./safe-logger.js";
 import { WorkerWhatsAppConnector } from "./whatsapp-connector.js";
 import { startHealthServer, type WorkerHealthState } from "./health-server.js";
+import { validateWorkerEnvironment } from "./runtime-config.js";
 
 process.env.APP_RUNTIME = "worker";
+validateWorkerEnvironment(process.env);
 const interval = Number(process.env.WORKER_POLL_INTERVAL_MS ?? 5_000);
 const maxAttempts = Math.min(3, Number(process.env.DELIVERY_MAX_ATTEMPTS ?? 3));
 const prisma = getPrisma();
@@ -38,6 +42,8 @@ const state: WorkerHealthState = {
   failed: 0,
 };
 let running = false;
+let shuttingDown = false;
+let activeTick: Promise<void> | null = null;
 function providerFor(
   platform: "TELEGRAM" | "WHATSAPP",
   demoBehavior: "SUCCESS" | "FAILURE" | "TIMEOUT",
@@ -121,8 +127,26 @@ async function deliverItem(now: Date) {
       continue;
     }
     const attemptNumber = attempts.length + 1;
+    const product = item.publication.product;
     const text =
-      item.publication.customMessage ?? item.publication.title ?? "Publicação";
+      item.publication.customMessage ??
+      (product
+        ? buildProductMessage({
+            title: product.title,
+            description: product.description,
+            currentPrice: product.currentPrice?.toString(),
+            oldPrice: product.oldPrice?.toString(),
+            couponCode: product.couponCode,
+            affiliateUrl: product.affiliateUrl,
+            storeName: product.storeName,
+            marketplace: product.marketplace,
+          })
+        : item.publication.title ?? "Publicação");
+    const mediaUrl =
+      item.publication.mediaUrl ??
+      product?.storedImageUrl ??
+      product?.originalImageUrl ??
+      undefined;
     const idempotencyKey = `${item.id}:${target.channelId}:${attemptNumber}`;
     const delivery = await deliveries.start({
       queueItemId: item.id,
@@ -130,7 +154,7 @@ async function deliverItem(now: Date) {
       attemptNumber,
       idempotencyKey,
       messageSnapshot: text,
-      mediaUrlSnapshot: item.publication.mediaUrl ?? undefined,
+      mediaUrlSnapshot: mediaUrl,
     });
     if (delivery.status === "SENT") continue;
     const provider = providerFor(target.channel.platform, demoBehavior);
@@ -141,10 +165,10 @@ async function deliverItem(now: Date) {
           ? (whatsappConnector.getSelectedGroup()?.groupId ?? "")
           : (process.env.TELEGRAM_GROUP_ID ?? "");
     const input = { destination, text, idempotencyKey };
-    const result = item.publication.mediaUrl
+    const result = mediaUrl
       ? await provider.sendImage({
           ...input,
-          imageUrl: item.publication.mediaUrl,
+          imageUrl: mediaUrl,
         })
       : await provider.sendText(input);
     await deliveries.complete(delivery.id, result);
@@ -173,13 +197,14 @@ async function deliverItem(now: Date) {
     await queues.finishItem(item.id, exhausted ? "FAILED" : "COMPLETED", now);
 }
 async function tick() {
-  if (running) return;
+  if (running || shuttingDown) return;
   running = true;
   try {
     const now = new Date();
     state.lastHeartbeatAt = now.toISOString();
     await scheduleRound(now);
     await deliverItem(now);
+    state.lastSuccessfulCycleAt = new Date().toISOString();
     state.lastError = undefined;
   } catch (error) {
     state.lastError = error instanceof Error ? error.name : "UnknownError";
@@ -187,16 +212,42 @@ async function tick() {
       errorType: error instanceof Error ? error.name : "UnknownError",
     });
   } finally {
-    await workerStates.save(state).catch(() => undefined);
+    await workerStates.save(state).catch((error) => {
+      state.lastError =
+        error instanceof Error ? error.name : "WorkerStatePersistenceError";
+      safeLogger.error("worker.state.failed", {
+        errorType:
+          error instanceof Error ? error.name : "WorkerStatePersistenceError",
+      });
+    });
     running = false;
   }
 }
+
+function runTick(): void {
+  if (activeTick || shuttingDown) return;
+  const work = tick();
+  activeTick = work;
+  void work.finally(() => {
+    if (activeTick === work) activeTick = null;
+  });
+}
+
+function closeServer(server: Server): Promise<void> {
+  return new Promise((resolve, reject) => {
+    server.close((error) => {
+      if (error) reject(error);
+      else resolve();
+    });
+  });
+}
+
 safeLogger.info("worker.started", {
   runId: state.runId,
   mockProviders: shouldUseMock(process.env),
   sendLive: false,
 });
-startHealthServer(
+const healthServer = startHealthServer(
   state,
   process.env.WORKER_HEALTH_TOKEN,
   process.env.WORKER_API_TOKEN,
@@ -211,5 +262,29 @@ if (process.env.WHATSAPP_ENABLED === "true") {
     });
   });
 }
-void tick();
-setInterval(() => void tick(), interval);
+runTick();
+const tickTimer = setInterval(runTick, interval);
+
+async function shutdown(signal: NodeJS.Signals): Promise<void> {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  clearInterval(tickTimer);
+  safeLogger.info("worker.shutdown.started", { signal });
+
+  if (activeTick) await activeTick.catch(() => undefined);
+  const results = await Promise.allSettled([
+    whatsappConnector.disconnect(),
+    closeServer(healthServer),
+    disconnectPrisma(),
+  ]);
+  const failed = results.filter((result) => result.status === "rejected").length;
+  if (failed > 0) {
+    process.exitCode = 1;
+    safeLogger.error("worker.shutdown.failed", { failedResources: failed });
+    return;
+  }
+  safeLogger.info("worker.shutdown.completed", { signal });
+}
+
+process.once("SIGTERM", () => void shutdown("SIGTERM"));
+process.once("SIGINT", () => void shutdown("SIGINT"));

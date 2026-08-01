@@ -58,6 +58,30 @@ De: ~R$ {{precoAnterior}}~
 
 ⚠️ Preço e estoque podem mudar sem aviso.`;
 
+export type ProductMessageInput = {
+  title?: string | null;
+  description?: string | null;
+  currentPrice?: string | null;
+  oldPrice?: string | null;
+  couponCode?: string | null;
+  affiliateUrl?: string | null;
+  storeName?: string | null;
+  marketplace?: string | null;
+};
+
+export function buildProductMessage(product: ProductMessageInput) {
+  return renderMessageTemplate(DEFAULT_PRODUCT_TEMPLATE, {
+    titulo: product.title ?? "",
+    descricao: product.description ?? "",
+    precoAtual: product.currentPrice ?? "",
+    precoAnterior: product.oldPrice ?? "",
+    cupom: product.couponCode ?? "",
+    link: product.affiliateUrl ?? "",
+    loja: product.storeName ?? "",
+    marketplace: product.marketplace ?? "",
+  }).text;
+}
+
 export function renderMessageTemplate(template: string, values: TemplateValues) {
   const sanitizedTemplate = sanitizeMessageText(template);
   const missing = new Set<TemplateVariable>();
@@ -126,7 +150,10 @@ export type PublicationPayload = z.infer<typeof publicationPayloadSchema>;
 export const liveDeliveryEnabled = (
   environment: Readonly<Record<string, string | undefined>> = process.env,
 ) =>
-  environment.SEND_LIVE === "true";
+  environment.DEMO_MODE !== "true" &&
+  environment.PROVIDER_MODE === "live" &&
+  environment.SEND_LIVE === "true" &&
+  environment.MOCK_PROVIDERS === "false";
 
 export type PublicationResult = {
   success: boolean;

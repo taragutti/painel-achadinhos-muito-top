@@ -15,6 +15,7 @@ export type WorkerHealthState = {
   runId: string;
   startedAt: string;
   lastHeartbeatAt: string;
+  lastSuccessfulCycleAt?: string;
   lastProcessingAt?: string;
   processed: number;
   succeeded: number;
@@ -82,7 +83,9 @@ export function startHealthServer(
 
 function healthResponse(response: import("node:http").ServerResponse, state: WorkerHealthState) {
     const heartbeatAge = Date.now() - new Date(state.lastHeartbeatAt).getTime();
-    const healthy = heartbeatAge < 120000;
+    const heartbeatHealthy = heartbeatAge < 120000;
+    const databaseCycleHealthy = Boolean(state.lastSuccessfulCycleAt) && !state.lastError;
+    const healthy = heartbeatHealthy && databaseCycleHealthy;
     return response
       .writeHead(healthy ? 200 : 503, {
         "content-type": "application/json",
@@ -90,11 +93,16 @@ function healthResponse(response: import("node:http").ServerResponse, state: Wor
       })
       .end(
         JSON.stringify({
-          status: healthy ? "ok" : "stale",
+          status: healthy ? "ok" : "unavailable",
           runId: state.runId,
           startedAt: state.startedAt,
           lastHeartbeatAt: state.lastHeartbeatAt,
+          lastSuccessfulCycleAt: state.lastSuccessfulCycleAt,
           lastProcessingAt: state.lastProcessingAt,
+          checks: {
+            heartbeat: heartbeatHealthy ? "ok" : "stale",
+            databaseCycle: databaseCycleHealthy ? "ok" : "unavailable",
+          },
           metrics: {
             processed: state.processed,
             succeeded: state.succeeded,

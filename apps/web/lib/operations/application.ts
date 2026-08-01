@@ -9,7 +9,7 @@ import { requireAuthenticatedAdmin } from "@/lib/auth/session";
 export const defaultSettings = {
   panelName: "Painel Achadinhos Muito Top",
   timezone: "America/Sao_Paulo" as const,
-  defaultIntervalMinutes: 30,
+  defaultIntervalMinutes: 20,
   defaultItemsPerBatch: 1,
   defaultSecondsBetweenItems: 30,
   dailyStartTime: "08:00",

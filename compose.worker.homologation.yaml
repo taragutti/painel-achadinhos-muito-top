@@ -1,0 +1,32 @@
+services:
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    image: painel-achadinhos-worker:local
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 30s
+    environment:
+      DATABASE_URL: ${WORKER_DATABASE_URL:-${DATABASE_URL:?DATABASE_URL is required}}
+      WORKER_HEALTH_TOKEN: ${WORKER_HEALTH_TOKEN:?WORKER_HEALTH_TOKEN is required}
+      WORKER_API_TOKEN: ${WORKER_API_TOKEN:?WORKER_API_TOKEN is required}
+      WORKER_HEALTH_HOST: 0.0.0.0
+      WORKER_HEALTH_PORT: "9464"
+      WORKER_POLL_INTERVAL_MS: ${WORKER_POLL_INTERVAL_MS:-5000}
+      DELIVERY_MAX_ATTEMPTS: ${DELIVERY_MAX_ATTEMPTS:-3}
+      QUEUE_LOCK_LEASE_SECONDS: ${QUEUE_LOCK_LEASE_SECONDS:-120}
+      DEMO_MODE: "true"
+      PROVIDER_MODE: mock
+      MOCK_PROVIDERS: "true"
+      SEND_LIVE: "false"
+      WHATSAPP_ENABLED: ${WHATSAPP_ENABLED:-false}
+      WHATSAPP_ALLOWED_GROUP_ID: ${WHATSAPP_ALLOWED_GROUP_ID:-}
+      MOCK_PROVIDER_BEHAVIOR: ${MOCK_PROVIDER_BEHAVIOR:-SUCCESS}
+    ports:
+      - "127.0.0.1:${WORKER_PUBLIC_PORT:-9464}:9464"
+    volumes:
+      - worker_whatsapp_session:/var/lib/achadinhos/whatsapp-session
+
+volumes:
+  worker_whatsapp_session:

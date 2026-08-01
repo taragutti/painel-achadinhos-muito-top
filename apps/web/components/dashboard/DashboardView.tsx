@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { QuickOfferForm } from "./QuickOfferForm";
 type DashboardData = {
   paused: boolean;
   integrations: Array<{
@@ -9,10 +10,14 @@ type DashboardData = {
     status: string;
     displayName: string | null;
   }>;
+  whatsappChannel: { id: string; name: string } | null;
   activeQueue: {
+    id: string;
     name: string;
     status: string;
     intervalMinutes: number;
+    dailyStartTime: string | null;
+    dailyEndTime: string | null;
     nextRunAt: string | null;
   } | null;
   nextItem: {
@@ -33,10 +38,6 @@ export function DashboardView({ data }: { data: DashboardData }) {
   const [feedback, setFeedback] = useState("");
   const integration = (type: string) =>
     data.integrations.find((item) => item.type === type);
-  const total = (type: string) =>
-    data.sentByPlatform
-      .filter((item) => item.platform === type)
-      .reduce((sum, item) => sum + item.total, 0);
   async function setGlobalPause(next: boolean) {
     const response = await fetch("/api/queues/global-pause", {
       method: "POST",
@@ -53,40 +54,44 @@ export function DashboardView({ data }: { data: DashboardData }) {
     } else setFeedback("Não foi possível alterar a operação.");
     setConfirming(null);
   }
-  const metrics = [
-    { label: "PRODUTOS", value: data.products, detail: "cadastrados" },
-    { label: "PENDENTES", value: data.pending, detail: "publicações" },
-    { label: "REALIZADAS HOJE", value: data.sentToday, detail: "entregas" },
-    { label: "FALHAS HOJE", value: data.failedToday, detail: "entregas" },
-    {
-      label: "WHATSAPP ENVIADO",
-      value: total("WHATSAPP"),
-      detail: "total histórico",
-    },
-    {
-      label: "TELEGRAM ENVIADO",
-      value: total("TELEGRAM"),
-      detail: "total histórico",
-    },
-  ];
+  async function startQueue() {
+    if (!data.activeQueue) return;
+    const response = await fetch(
+      `/api/queues/${data.activeQueue.id}/actions`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ action: "START" }),
+      },
+    );
+    if (response.ok) {
+      setFeedback("Automação ativada. A fila seguirá o horário configurado.");
+      window.location.reload();
+    } else {
+      setFeedback("Não foi possível ativar a automação.");
+    }
+  }
+  const whatsapp = integration("WHATSAPP");
   return (
     <>
       <header className="page-heading dashboard-heading">
         <div>
-          <span className="eyebrow">OPERAÇÃO EM TEMPO REAL</span>
-          <h1>Dashboard</h1>
-          <p>Resumo de filas, integrações e entregas.</p>
+          <span className="eyebrow">ACHADINHOS MUITO TOP</span>
+          <h1>Postagens automáticas</h1>
+          <p>Da Shopee para o seu grupo do WhatsApp.</p>
         </div>
         <div className="dashboard-actions">
-          <Link className="primary" href="/publicacoes/nova">
-            + Nova publicação
+          <Link className="secondary" href="/canais">
+            Configurar grupo
           </Link>
-          <Link className="secondary" href="/filas">
-            Abrir fila
-          </Link>
+          {data.activeQueue?.status === "PAUSED" && (
+            <button className="primary" onClick={() => void startQueue()}>
+              ▶ Ativar automação
+            </button>
+          )}
           <button
             className="pause-button"
-            disabled={paused}
+            disabled={paused || data.activeQueue?.status === "PAUSED"}
             onClick={() => setConfirming("pause")}
           >
             Ⅱ Pausar tudo
@@ -114,41 +119,66 @@ export function DashboardView({ data }: { data: DashboardData }) {
           <span>Nenhum item será processado até a retomada.</span>
         </div>
       )}
-      <section className="channel-status-grid">
-        {["WHATSAPP", "TELEGRAM"].map((type) => {
-          const item = integration(type);
-          return (
-            <article className="content-card channel-status-card" key={type}>
-              <span
-                className={`status-dot ${item?.status === "CONNECTED" ? "" : "offline"}`}
-              />
-              <div>
-                <span className="eyebrow">{type}</span>
-                <strong>{item?.status ?? "NÃO CONFIGURADO"}</strong>
-                <small>{item?.displayName ?? "Nenhum grupo selecionado"}</small>
-              </div>
-            </article>
-          );
-        })}
-        <article className="content-card channel-status-card">
-          <span className={`status-dot ${data.activeQueue ? "" : "offline"}`} />
+      <QuickOfferForm />
+      <section className="automation-status-grid">
+        <article className="content-card automation-status-card">
+          <span
+            className={`status-dot ${whatsapp?.status === "CONNECTED" ? "" : "offline"}`}
+          />
           <div>
-            <span className="eyebrow">FILA ATIVA</span>
-            <strong>{data.activeQueue?.name ?? "Nenhuma"}</strong>
+            <span className="eyebrow">GRUPO DO WHATSAPP</span>
+            <strong>
+              {data.whatsappChannel?.name ??
+                whatsapp?.displayName ??
+                "Nenhum grupo selecionado"}
+            </strong>
+            <small>{whatsapp?.status ?? "NÃO CONFIGURADO"}</small>
+          </div>
+          <Link href="/canais">Configurar</Link>
+        </article>
+        <article className="content-card channel-status-card">
+          <span
+            className={`status-dot ${data.activeQueue && !paused ? "" : "offline"}`}
+          />
+          <div>
+            <span className="eyebrow">AUTOMAÇÃO</span>
+            <strong>
+              {paused
+                ? "Pausada"
+                : data.activeQueue?.status === "PAUSED"
+                  ? "Pausada"
+                  : data.activeQueue
+                  ? "Ativa"
+                  : "Aguardando início"}
+            </strong>
             <small>
               {data.activeQueue
-                ? `${data.activeQueue.intervalMinutes} min entre rodadas`
-                : "Crie ou retome uma fila"}
+                ? `1 postagem a cada ${data.activeQueue.intervalMinutes} minutos`
+                : "A fila começa pausada por segurança"}
             </small>
           </div>
         </article>
+        <article className="content-card channel-status-card">
+          <span className="schedule-mark">◷</span>
+          <div>
+            <span className="eyebrow">HORÁRIO DIÁRIO</span>
+            <strong>
+              {data.activeQueue?.dailyStartTime ?? "08:00"} às{" "}
+              {data.activeQueue?.dailyEndTime ?? "22:00"}
+            </strong>
+            <small>Horário de Brasília · todos os dias</small>
+          </div>
+        </article>
       </section>
-      <section className="metric-grid">
-        {metrics.map((metric) => (
-          <article className="metric-card" key={metric.label}>
-            <span>{metric.label}</span>
+      <section className="simple-metrics">
+        {[
+          { label: "Na fila", value: data.pending },
+          { label: "Enviadas hoje", value: data.sentToday },
+          { label: "Falhas hoje", value: data.failedToday },
+        ].map((metric) => (
+          <article key={metric.label}>
             <strong>{metric.value}</strong>
-            <small>{metric.detail}</small>
+            <span>{metric.label}</span>
           </article>
         ))}
       </section>

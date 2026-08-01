@@ -3,6 +3,7 @@ export type WorkerState = {
   runId: string;
   startedAt: string;
   lastHeartbeatAt: string;
+  lastSuccessfulCycleAt?: string;
   lastProcessingAt?: string;
   processed: number;
   succeeded: number;

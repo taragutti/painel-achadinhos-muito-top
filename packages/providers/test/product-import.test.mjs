@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
-import { ManualImporter, MercadoLivreImporter, OpenGraphImporter, ProductImportService, SafeHttpClient, ShopeeApiAdapter, ShopeeImporter, assertSafeRemoteUrl, createShopeeAuthorization, extractShopeeProductIdentity, validateImageSignature } from "../dist/index.js";
+import { ManualImporter, MercadoLivreImporter, MockProductImporter, OpenGraphImporter, ProductImportService, SafeHttpClient, ShopeeApiAdapter, ShopeeImporter, assertSafeRemoteUrl, createShopeeAuthorization, extractShopeeProductIdentity, validateImageSignature } from "../dist/index.js";
 
 const publicDns = async () => [{ address: "93.184.216.34", family: 4 }];
 const html = '<html><head><meta property="og:title" content="Achadinho"><meta property="og:image" content="/foto.jpg"><meta property="product:price:amount" content="39.90"></head></html>';
@@ -120,6 +120,15 @@ test("falls back to manual entry when an API is unavailable", async () => {
 test("supports explicit manual entry", async () => {
   const product = await new ManualImporter().importProduct(new URL("https://loja.example/item"));
   assert.equal(product.marketplace, "OTHER"); assert.equal(product.sourceUrl, product.affiliateUrl);
+});
+
+test("imports a deterministic Shopee offer without network in demo mode", async () => {
+  const product = await new MockProductImporter().importProduct(new URL("https://shopee.com.br/produto-i.12345.98765"));
+  assert.equal(product.marketplace, "SHOPEE");
+  assert.equal(product.affiliateConfirmed, true);
+  assert.equal(product.incomplete, false);
+  assert.match(product.affiliateUrl, /^https:\/\/shope\.ee\/mock-/);
+  assert.match(product.warnings[0], /Importação simulada/);
 });
 
 test("rejects an image whose bytes do not match its extension", () => {

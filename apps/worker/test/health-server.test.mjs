@@ -7,6 +7,7 @@ test("worker health is private and exposes only safe operational metrics", async
     runId: "run-test",
     startedAt: new Date().toISOString(),
     lastHeartbeatAt: new Date().toISOString(),
+    lastSuccessfulCycleAt: new Date().toISOString(),
     lastProcessingAt: new Date().toISOString(),
     processed: 3,
     succeeded: 2,
@@ -38,8 +39,22 @@ test("worker health is private and exposes only safe operational metrics", async
   assert.equal(response.status, 200);
   const body = await response.json();
   assert.equal(body.runId, "run-test");
+  assert.deepEqual(body.checks, {
+    heartbeat: "ok",
+    databaseCycle: "ok",
+  });
   assert.deepEqual(body.metrics, { processed: 3, succeeded: 2, failed: 1 });
   assert.doesNotMatch(JSON.stringify(body), /token|authorization|session/i);
+
+  state.lastError = "PrismaClientInitializationError";
+  const degradedResponse = await fetch(endpoint, {
+    headers: { authorization: `Bearer ${healthToken}` },
+  });
+  assert.equal(degradedResponse.status, 503);
+  const degradedBody = await degradedResponse.json();
+  assert.equal(degradedBody.status, "unavailable");
+  assert.equal(degradedBody.checks.databaseCycle, "unavailable");
+  delete state.lastError;
 
   const statusEndpoint = `http://127.0.0.1:${address.port}/control/whatsapp/status`;
   assert.equal((await fetch(statusEndpoint)).status, 401);

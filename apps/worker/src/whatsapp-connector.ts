@@ -1,5 +1,6 @@
 import {
   DisconnectReason,
+  fetchLatestBaileysVersion,
   makeWASocket,
   useMultiFileAuthState,
   type WASocket,
@@ -149,8 +150,10 @@ export class WorkerWhatsAppConnector implements WhatsAppConnector {
     const { state, saveCreds } = await useMultiFileAuthState(resolve(this.sessionDirectory));
     this.state = "CONNECTING";
     this.lastError = undefined;
+    const { version } = await fetchLatestBaileysVersion({ timeout: 5_000 });
     const socket = makeWASocket({
       auth: state,
+      version,
       logger: pino({ level: "silent" }),
       printQRInTerminal: false,
       markOnlineOnConnect: false,

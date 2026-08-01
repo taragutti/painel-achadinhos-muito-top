@@ -38,9 +38,33 @@ Configure `WORKER_API_URL` and the same strong `WORKER_API_TOKEN` in Vercel and 
 
 Use a supervised Node.js process or container with restart-on-failure, graceful termination, PostgreSQL access and a persistent volume for `WHATSAPP_SESSION_DIR`. Bind health to a private interface, configure a unique token, ship structured logs, alert on stale heartbeat, and deploy only one new worker revision at a time. Database locks and idempotency protect overlap, but rolling overlap should remain brief.
 
+The repository includes `apps/worker/Dockerfile`, built from the repository root:
+
+```sh
+docker build -f apps/worker/Dockerfile -t painel-achadinhos-worker:local .
+```
+
+The image runs as a non-root user and starts with mock providers, WhatsApp, and live delivery disabled. Supply `DATABASE_URL`, a unique `WORKER_HEALTH_TOKEN` of at least 24 characters, and a separate `WORKER_API_TOKEN` through the host secret manager. Mount `/var/lib/achadinhos/whatsapp-session` on an encrypted persistent volume. Do not put tokens in the image or command line.
+
+The container health check calls the protected `/health` endpoint with `WORKER_HEALTH_TOKEN`. It returns healthy only after a complete database-backed worker cycle and becomes unavailable after a cycle or state-persistence error; a live process without PostgreSQL is therefore not considered ready. Expose port `9464` only on a private network shared with the dashboard. On `SIGTERM` or `SIGINT`, the worker stops polling, lets the active cycle finish, disconnects WhatsApp without revoking its saved session, closes the health server, and disconnects Prisma.
+
+Apply reviewed migrations as a separate release job before starting the new worker. The worker image intentionally does not run migrations during startup.
+
+## Worker homologation
+
+`compose.worker.homologation.yaml` provides a persistent, restartable worker profile whose live-delivery flags are fixed to safe values. It requires `DATABASE_URL`, `WORKER_HEALTH_TOKEN`, and `WORKER_API_TOKEN` from the host environment and publishes health only on the host loopback interface.
+
+Validate the resolved configuration before starting it:
+
+```sh
+docker compose -f compose.worker.homologation.yaml config
+```
+
+Then use `docker compose -f compose.worker.homologation.yaml up -d --build` only on the reviewed worker host. Enabling `WHATSAPP_ENABLED=true` may establish the account session for QR/group configuration, but the profile still forces all publication delivery through mock providers. Never use `docker compose down -v`; the named volume contains the persistent WhatsApp session.
+
 ## Live activation
 
-Deployment and live delivery are separate decisions. After a healthy deployment, enable one test destination first. Setting `SEND_LIVE=true` requires an explicit operational approval and must never be part of a default configuration.
+Deployment and live delivery are separate decisions. After a healthy deployment, enable one test destination first. Live delivery requires all three explicit gates (`PROVIDER_MODE=live`, `MOCK_PROVIDERS=false`, and `SEND_LIVE=true`) with `DEMO_MODE=false`; inconsistent or incomplete activation makes the worker refuse startup. Setting these values requires an explicit operational approval and must never be part of a default configuration.
 
 ## Rollback
 

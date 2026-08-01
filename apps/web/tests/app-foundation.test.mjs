@@ -81,3 +81,21 @@ test("keeps WhatsApp QR control server-side and live delivery disabled", async (
   assert.match(worker, /SEND_LIVE !== "true"/);
   assert.match(worker, /endsWith\("@g\.us"\)/);
 });
+
+test("keeps the main dashboard focused on one-click Shopee queueing", async () => {
+  const [dashboard, quickOffer, products, operations] = await Promise.all([
+    readFile(new URL("../components/dashboard/DashboardView.tsx", appRoot), "utf8"),
+    readFile(new URL("../components/dashboard/QuickOfferForm.tsx", appRoot), "utf8"),
+    readFile(new URL("../lib/products/application.ts", appRoot), "utf8"),
+    readFile(new URL("../../../packages/database/src/repositories/operational-repository.ts", appRoot), "utf8"),
+  ]);
+  assert.match(dashboard, /Postagens automáticas/);
+  assert.match(dashboard, /Ativar automação/);
+  assert.match(quickOffer, /Converter e colocar na fila/);
+  assert.match(quickOffer, /affiliateConfirmed/);
+  assert.match(products, /dailyStartTime:\s*"08:00"/);
+  assert.match(products, /dailyEndTime:\s*"22:00"/);
+  assert.match(products, /intervalMinutes:\s*20/);
+  assert.match(operations, /queueItem\.count/);
+  assert.match(operations, /"PENDING", "SCHEDULED", "PROCESSING", "PAUSED"/);
+});
