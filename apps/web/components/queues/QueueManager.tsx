@@ -78,7 +78,7 @@ export function QueueManager({
     channelIds: channels.filter((channel) => channel.platform === "WHATSAPP").slice(0, 1).map((channel) => channel.id),
     startsAt: "",
     dailyStartTime: "08:00",
-    dailyEndTime: "21:30",
+    dailyEndTime: "22:00",
     itemsPerBatch: 1,
     intervalMinutes: 20,
     customInterval: 20,

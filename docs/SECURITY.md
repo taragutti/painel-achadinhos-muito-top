@@ -17,9 +17,11 @@ The system is private and single-administrator, but every server boundary still 
 
 ## Live-delivery interlock
 
-Mock delivery is the default. Live adapters require both:
+Mock delivery is the default. Live adapters require every gate:
 
 ```text
+DEMO_MODE=false
+PROVIDER_MODE=live
 SEND_LIVE=true
 MOCK_PROVIDERS=false
 ```
@@ -54,7 +56,7 @@ Missing, malformed, or different values must select mock behavior or fail closed
 
 - Web and worker health endpoints require distinct high-entropy bearer tokens and fail closed when a token is absent.
 - Keep the worker health listener private; expose it only through an authenticated monitor or private network.
-- `DEMO_MODE=true`, `SEND_LIVE=false` and `MOCK_PROVIDERS=true` guarantee mock routing. Never treat a configured provider token as authorization to send.
+- `DEMO_MODE=true`, `PROVIDER_MODE=mock`, `SEND_LIVE=false` and `MOCK_PROVIDERS=true` guarantee mock routing. Never treat a configured provider token as authorization to send.
 
 ## Data protection
 

@@ -2,6 +2,8 @@
 
 Monorepo do dashboard privado e do fluxo de publicações para Telegram e WhatsApp. O sistema inclui autenticação de administrador único, produtos, três tipos de publicação, templates, filas agendadas, histórico imutável, providers substituíveis e modo de demonstração sem rede externa.
 
+Comece pelo [guia completo do projeto](docs/PROJECT_GUIDE.md), que reúne o fluxo da Shopee ao WhatsApp, configuração, homologação, segurança, operação e estado atual.
+
 ## Estrutura
 
 ```text
@@ -35,7 +37,7 @@ O endpoint `GET /api/health` exige `Authorization: Bearer <APP_HEALTH_TOKEN>` e 
 
 O importador resolve o link informado pelo administrador, identifica produto e loja e complementa os metadados pela API oficial de Afiliados da Shopee. A assinatura é calculada somente no servidor e nenhuma credencial retorna ao navegador.
 
-Configure `SHOPEE_APP_ID`, `SHOPEE_APP_SECRET` e `SHOPEE_API_BASE_URL`. `SHOPEE_AFFILIATE_ID` permanece disponível para recursos vinculados à conta. O endpoint suportado é `https://open-api.affiliate.shopee.com.br/graphql`.
+Configure `SHOPEE_APP_ID`, `SHOPEE_APP_SECRET` e `SHOPEE_API_BASE_URL`. `SHOPEE_AFFILIATE_ID` permanece disponível para recursos vinculados à conta. Em homologação mock (`DEMO_MODE=true`), as credenciais da Shopee podem ficar ausentes; elas são obrigatórias ao ativar o modo real. O endpoint suportado é `https://open-api.affiliate.shopee.com.br/graphql`.
 
 ## Worker
 
@@ -57,5 +59,7 @@ Use somente migrations Prisma versionadas. Em desenvolvimento, `db:migrate` cria
 - `npm run typecheck`: verifica os contratos TypeScript.
 - `npm run db:generate`: atualiza o Prisma Client.
 - `npm run db:migrate`: cria uma migração local.
+- `npm run env:prepare-local`: gera tokens locais e restaura as travas mock sem exibir secrets.
+- `npm run preflight:homologation`: valida a configuração segura sem imprimir secrets.
 
-Consulte `docs/ARCHITECTURE.md`, `docs/SECURITY.md`, `docs/DEPLOYMENT.md` e `docs/OPERATIONS.md` antes de operar ou implantar.
+Consulte `docs/PROJECT_GUIDE.md`, `docs/architecture.md`, `docs/SECURITY.md`, `docs/DEPLOYMENT.md` e `docs/OPERATIONS.md` antes de operar ou implantar.

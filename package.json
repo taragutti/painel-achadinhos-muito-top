@@ -13,13 +13,17 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
-    "test": "turbo test",
+    "test": "turbo test && npm run test:preflight",
+    "test:preflight": "node --test scripts/preflight-homologation.test.mjs scripts/prepare-local-env.test.mjs",
     "lint": "npm run lint --workspace=@achadinhos/web",
     "typecheck": "turbo typecheck",
     "db:generate": "npm run generate --workspace=@achadinhos/database",
     "db:migrate": "npm run migrate:dev --workspace=@achadinhos/database",
     "dev:web": "npm run dev --workspace=@achadinhos/web",
-    "dev:worker": "npm run dev --workspace=@achadinhos/worker"
+    "dev:worker": "npm run dev --workspace=@achadinhos/worker",
+    "preflight:homologation": "node --env-file-if-exists=.env scripts/preflight-homologation.mjs",
+    "env:prepare-local": "node scripts/prepare-local-env.mjs",
+    "env:use-local-db": "node scripts/prepare-local-env.mjs --database-container"
   },
   "devDependencies": {
     "turbo": "^2.8.0",

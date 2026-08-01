@@ -6,6 +6,7 @@ const schemaUrl = new URL("../prisma/schema.prisma", import.meta.url);
 const migrationUrl = new URL("../prisma/migrations/20260718173000_complete_domain_model/migration.sql", import.meta.url);
 const messagingMigrationUrl = new URL("../prisma/migrations/20260718203000_messaging_providers/migration.sql", import.meta.url);
 const queueMigrationUrl = new URL("../prisma/migrations/20260718213000_queue_scheduling/migration.sql", import.meta.url);
+const optionalStoreMigrationUrl = new URL("../prisma/migrations/20260728214500_optional_product_store_name/migration.sql", import.meta.url);
 const queueRepositoryUrl = new URL("../src/repositories/queue-repository.ts", import.meta.url);
 
 test("defines the complete publishing domain and required idempotency keys", async () => {
@@ -37,4 +38,14 @@ test("keeps the domain migration data-preserving and removes risky history casca
   assert.match(migration, /ON DELETE SET NULL/);
   assert.match(migration, /ON DELETE RESTRICT/);
   assert.doesNotMatch(migration, /ON DELETE CASCADE/);
+});
+
+test("keeps imported product store names optional with a forward-only migration", async () => {
+  const [schema, migration] = await Promise.all([
+    readFile(schemaUrl, "utf8"),
+    readFile(optionalStoreMigrationUrl, "utf8"),
+  ]);
+  assert.match(schema, /storeName\s+String\?/);
+  assert.match(migration, /ALTER COLUMN "storeName" DROP NOT NULL/);
+  assert.doesNotMatch(migration, /DROP\s+TABLE|TRUNCATE|DELETE\s+FROM/i);
 });

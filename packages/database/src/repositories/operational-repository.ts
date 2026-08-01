@@ -14,6 +14,7 @@ export class OperationalRepository {
   async dashboard(dayStart: Date, dayEnd: Date) {
     const [
       integrations,
+      whatsappChannel,
       activeQueue,
       nextItem,
       products,
@@ -25,14 +26,21 @@ export class OperationalRepository {
       this.prisma.integration.findMany({
         select: { type: true, status: true, displayName: true },
       }),
+      this.prisma.channel.findFirst({
+        where: { platform: "WHATSAPP", isActive: true },
+        orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
+        select: { id: true, name: true },
+      }),
       this.prisma.publishingQueue.findFirst({
-        where: { status: { in: ["ACTIVE", "RUNNING"] } },
+        where: { status: { in: ["ACTIVE", "RUNNING", "PAUSED"] } },
         orderBy: { nextRunAt: "asc" },
         select: {
           id: true,
           name: true,
           status: true,
           intervalMinutes: true,
+          dailyStartTime: true,
+          dailyEndTime: true,
           nextRunAt: true,
         },
       }),
@@ -59,10 +67,9 @@ export class OperationalRepository {
         },
       }),
       this.prisma.product.count({ where: { deletedAt: null } }),
-      this.prisma.publication.count({
+      this.prisma.queueItem.count({
         where: {
-          deletedAt: null,
-          status: { in: ["DRAFT", "QUEUED", "PROCESSING"] },
+          status: { in: ["PENDING", "SCHEDULED", "PROCESSING", "PAUSED"] },
         },
       }),
       this.prisma.delivery.count({
@@ -83,6 +90,7 @@ export class OperationalRepository {
     });
     return {
       integrations,
+      whatsappChannel,
       activeQueue,
       nextItem,
       products,

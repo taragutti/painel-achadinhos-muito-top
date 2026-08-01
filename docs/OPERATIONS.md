@@ -2,7 +2,7 @@
 
 ## Safe operating mode
 
-Keep `DEMO_MODE=true`, `SEND_LIVE=false`, `MOCK_PROVIDERS=true` and providers disabled while validating the system. The queue still schedules batches, creates deliveries, retries failures and writes history. The Integrações page can select simulated success, failure or timeout. Confirm the UI shows “simulação” before starting a queue.
+Keep `DEMO_MODE=true`, `PROVIDER_MODE=mock`, `SEND_LIVE=false`, `MOCK_PROVIDERS=true` and providers disabled while validating the system. The queue still schedules batches, creates deliveries, retries failures and writes history. The Integrações page can select simulated success, failure or timeout. Confirm the UI shows “simulação” before starting a queue.
 
 ## Web runbook
 

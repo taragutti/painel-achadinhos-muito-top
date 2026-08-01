@@ -48,7 +48,20 @@ export async function findOrCreateMainQueue() {
     where: { status: { in: ["ACTIVE", "PAUSED"] } },
     orderBy: { createdAt: "asc" },
   });
-  if (existing) return { queue: existing, created: false };
+  if (existing) {
+    const queue = await prisma.publishingQueue.update({
+      where: { id: existing.id },
+      data: {
+        dailyStartTime: "08:00",
+        dailyEndTime: "22:00",
+        timezone: "America/Sao_Paulo",
+        itemsPerBatch: 1,
+        intervalMinutes: 20,
+        repeatEnabled: false,
+      },
+    });
+    return { queue, created: false };
+  }
   const channel = await prisma.channel.findFirst({
     where: { platform: "WHATSAPP", isActive: true },
     orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
@@ -59,7 +72,7 @@ export async function findOrCreateMainQueue() {
       name: "Fila principal",
       status: "PAUSED",
       dailyStartTime: "08:00",
-      dailyEndTime: "21:30",
+      dailyEndTime: "22:00",
       timezone: "America/Sao_Paulo",
       itemsPerBatch: 1,
       intervalMinutes: 20,

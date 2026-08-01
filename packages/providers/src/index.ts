@@ -8,6 +8,7 @@ export * from "./product-import/url-security.js";
 export * from "./product-import/safe-http-client.js";
 export * from "./product-import/opengraph.js";
 export * from "./product-import/manual.js";
+export * from "./product-import/mock.js";
 export * from "./product-import/shopee-api-adapter.js";
 export * from "./product-import/shopee.js";
 export * from "./product-import/mercado-livre.js";
