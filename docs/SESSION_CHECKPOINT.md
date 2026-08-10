@@ -10,6 +10,7 @@ Data: 2026-08-10
 - Operação global pausada, sem itens pendentes ou em processamento ao encerrar os testes.
 - Web, worker e contêiner PostgreSQL usados nos testes foram encerrados.
 - Nenhuma mensagem real de WhatsApp ou Telegram foi enviada.
+- Dependências de produção auditadas com `npm audit --omit=dev`: zero vulnerabilidades.
 
 ## Fluxos validados
 
@@ -33,6 +34,9 @@ Data: 2026-08-10
 - O worker baixa imagens por cliente HTTP seguro, limita tamanho e tempo e valida a assinatura do arquivo.
 - O carregamento inicial e os refreshes da fila usam o mesmo contrato serializado.
 - As raízes dos gerenciadores de fila e canais não criam elementos `main` aninhados.
+- Next.js, React, Sharp, PostCSS, NanoID, Cloudflare Vite Plugin, Wrangler e Vite foram atualizados para versões corrigidas.
+- O worker declara Sharp 0.35.3 explicitamente para impedir que o peer do Baileys use a versão vulnerável das ferramentas legadas.
+- Next.js 16.3 adicionou regras locais que direcionam agentes à documentação correspondente à versão instalada.
 
 ## Validação de 2026-08-10
 
@@ -43,9 +47,12 @@ Data: 2026-08-10
 - `npm run preflight:homologation`: configuração aprovada.
 - `prisma migrate status`: banco atualizado, 8 migrations encontradas.
 - E2E local no navegador: aprovado em perfil mock.
+- Smoke test após o upgrade para Next.js 16.3.0: dashboard, filas e canais aprovados sem erros de console.
+- Auditoria de produção: zero vulnerabilidades conhecidas no registro npm em 2026-08-10.
+- Auditoria completa: dois alertas altos permanecem somente no `image-size` transitivo do empacotamento legado `vinext`, que não participa do build Next.js nem do runtime de produção atual.
 
 ## Próxima etapa segura
 
-O projeto está pronto para revisão final e versionamento local. Certificação de credenciais reais, envio real, deploy, publicação, push e abertura de PR permanecem fora deste checkpoint e exigem uma etapa separada e explicitamente autorizada.
+O projeto está pronto para revisão final e versionamento local. Se o empacotamento legado `vinext` voltar a ser usado, ele deve ser migrado e auditado separadamente antes da execução. Certificação de credenciais reais, envio real, deploy, publicação, push e abertura de PR permanecem fora deste checkpoint e exigem uma etapa separada e explicitamente autorizada.
 
 Não fazer deploy, push, reset do Docker, `prisma db push`, `prisma migrate reset` ou envio real.

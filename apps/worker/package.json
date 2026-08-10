@@ -15,6 +15,7 @@
     "@achadinhos/shared": "*",
     "@whiskeysockets/baileys": "6.7.23",
     "pino": "9.14.0",
+    "sharp": "0.35.3",
     "ws": "8.21.0"
   },
   "devDependencies": {
