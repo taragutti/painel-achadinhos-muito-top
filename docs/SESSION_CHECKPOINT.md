@@ -40,7 +40,7 @@ Data: 2026-08-10
 
 ## Validação de 2026-08-10
 
-- `npm test`: aprovado — 74 testes no total, sem falhas.
+- `npm test`: aprovado — 75 testes no total, sem falhas.
 - Build de produção do Next.js e builds TypeScript: aprovados pela pipeline de testes.
 - `npm run typecheck`: aprovado.
 - `npm run lint`: aprovado.
@@ -58,9 +58,10 @@ Data: 2026-08-10
 - Pacote de publicação preparado com CI sem deploy, template de PR, changelog e handoff operacional.
 - URL pública da web validada para usar o domínio canônico ou as variáveis de sistema da Vercel em vez de `localhost`.
 - Workflow de CI validado como YAML e configurado com todas as travas de entrega real desabilitadas.
+- Variáveis necessárias ao build web declaradas na tarefa `build` do Turborepo após a inspeção do primeiro preview externo.
 
 ## Próxima etapa segura
 
-O projeto está pronto como `v0.1.0-rc.2` local para um novo PR da branch `codex/production-finish` para `main`. Siga `docs/RELEASE_HANDOFF.md`. Se o empacotamento legado `vinext` voltar a ser usado, ele deve ser migrado e auditado separadamente antes da execução. Certificação de credenciais reais, envio real, deploy, publicação, push e abertura de PR permanecem fora deste checkpoint e exigem uma etapa separada e explicitamente autorizada.
+O projeto está pronto como `v0.1.0-rc.3` local no PR #2 da branch `codex/production-finish` para `main`. Siga `docs/RELEASE_HANDOFF.md`. Se o empacotamento legado `vinext` voltar a ser usado, ele deve ser migrado e auditado separadamente antes da execução. Certificação de credenciais reais, envio real e merge para produção permanecem fora deste checkpoint e exigem uma etapa separada e explicitamente autorizada.
 
 Não fazer deploy, push, reset do Docker, `prisma db push`, `prisma migrate reset` ou envio real.

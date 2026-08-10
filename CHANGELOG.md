@@ -2,6 +2,17 @@
 
 Todas as mudanças relevantes deste projeto são registradas neste arquivo.
 
+## [0.1.0-rc.3] - 2026-08-10
+
+### Corrigido
+
+- Variáveis usadas pelo build e runtime web são declaradas explicitamente na tarefa `build` do Turborepo, removendo o risco de filtragem durante o build da Vercel.
+
+### Validado
+
+- 75 testes, lint, typecheck, build Next.js, preflight e auditoria de dependências de produção.
+- Preview Vercel do RC anterior chegou a `READY` e revelou a configuração ausente antes do merge.
+
 ## [0.1.0-rc.2] - 2026-08-10
 
 ### Adicionado

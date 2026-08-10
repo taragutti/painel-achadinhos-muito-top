@@ -4,7 +4,7 @@ This checklist is for a separately approved production environment. The local ho
 
 ## Release candidate evidence
 
-The local `v0.1.0-rc.2` candidate has passed 74 tests, lint, typecheck, production build, homologation preflight and the production-dependency audit. These results prepare the candidate but do not complete any production item below. GitHub publication, Vercel preview, production database backup, permanent worker provisioning and operational approval must still be verified in their target environments.
+The local `v0.1.0-rc.3` candidate has passed 75 tests, lint, typecheck, production build, homologation preflight and the production-dependency audit. These results prepare the candidate but do not complete any production item below. GitHub publication, Vercel preview, production database backup, permanent worker provisioning and operational approval must still be verified in their target environments.
 
 ## 1. Scope and approval
 

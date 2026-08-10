@@ -6,7 +6,7 @@ Este documento entrega o caminho para publicar a homologação já validada. Ele
 
 ## Estado preparado
 
-- Candidata local: `v0.1.0-rc.2`.
+- Candidata local: `v0.1.0-rc.3`.
 - Branch de trabalho: `codex/production-finish`.
 - Repositório: `taragutti/painel-achadinhos-muito-top`.
 - Projeto web Vercel: `painel-achadinhos-muito-top-web`.
@@ -25,16 +25,16 @@ Este documento entrega o caminho para publicar a homologação já validada. Ele
 
 O PR anterior foi integrado antes das correções finais. Por isso, a publicação deve usar um novo PR da branch `codex/production-finish` para `main`.
 
-## Passos manuais no GitHub
+## Atualização manual do GitHub
 
-Execute somente após revisar o diff e confirmar que a política do repositório permite a publicação:
+O PR draft #2 já existe. Depois de revisar o diff local do RC3, publique somente o commit incremental e a nova tag:
 
 ```sh
 git push origin codex/production-finish
-git push origin v0.1.0-rc.2
+git push origin v0.1.0-rc.3
 ```
 
-Depois, abra um novo PR para `main`, aguarde o workflow **Validate release candidate** e valide o preview criado pela integração da Vercel. A tag final `v0.1.0` deve ser criada somente depois do merge e da aprovação do deploy de produção.
+Depois, aguarde novamente o workflow **Validate release candidate** e valide o novo preview criado pela integração da Vercel. A tag final `v0.1.0` deve ser criada somente depois do merge e da aprovação do deploy de produção.
 
 ## Configuração web na Vercel
 

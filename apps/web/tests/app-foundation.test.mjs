@@ -32,6 +32,30 @@ test("uses the stable Vercel production URL instead of a loopback APP_URL", asyn
   assert.match(publicUrl, /isLoopback\(explicitUrl\.hostname\)/);
 });
 
+test("passes deployment configuration through the Turborepo build boundary", async () => {
+  const turbo = await readFile(
+    new URL("../../../turbo.json", appRoot),
+    "utf8",
+  ).then(JSON.parse);
+  const buildEnvironment = new Set(turbo.tasks.build.env);
+
+  for (const name of [
+    "DATABASE_URL",
+    "APP_URL",
+    "VERCEL_PROJECT_PRODUCTION_URL",
+    "VERCEL_URL",
+    "APP_ENCRYPTION_KEY",
+    "DEMO_MODE",
+    "PROVIDER_MODE",
+    "MOCK_PROVIDERS",
+    "SEND_LIVE",
+    "WORKER_API_URL",
+    "WORKER_API_TOKEN",
+  ]) {
+    assert.ok(buildEnvironment.has(name), `missing build environment: ${name}`);
+  }
+});
+
 test("defines the private administrator login without public account flows", async () => {
   const [loginPage, loginForm] = await Promise.all([
     readFile(new URL("login/page.tsx", appRoot), "utf8"),
