@@ -50,6 +50,9 @@ Data: 2026-08-10
 - Smoke test após o upgrade para Next.js 16.3.0: dashboard, filas e canais aprovados sem erros de console.
 - Auditoria de produção: zero vulnerabilidades conhecidas no registro npm em 2026-08-10.
 - Auditoria completa: dois alertas altos permanecem somente no `image-size` transitivo do empacotamento legado `vinext`, que não participa do build Next.js nem do runtime de produção atual.
+- `docker compose -f compose.worker.homologation.yaml config --quiet`: aprovado.
+- Imagem `painel-achadinhos-worker:local`: construída do zero com `npm ci`, builds dos quatro workspaces do runtime e zero vulnerabilidades na instalação do container.
+- Inspeção da imagem: usuário não-root `node`, healthcheck configurado, `DEMO_MODE=true`, `PROVIDER_MODE=mock`, `SEND_LIVE=false` e `WHATSAPP_ENABLED=false`.
 
 ## Próxima etapa segura
 
