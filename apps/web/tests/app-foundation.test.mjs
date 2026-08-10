@@ -4,6 +4,20 @@ import test from "node:test";
 
 const appRoot = new URL("../app/", import.meta.url);
 
+test("loads the single root environment file during local development", async () => {
+  const [packageJson, startScript] = await Promise.all([
+    readFile(new URL("../package.json", appRoot), "utf8").then(JSON.parse),
+    readFile(
+      new URL("../../../scripts/start-web-dev.mjs", appRoot),
+      "utf8",
+    ),
+  ]);
+
+  assert.match(packageJson.scripts.dev, /start-web-dev\.mjs/);
+  assert.match(startScript, /process\.loadEnvFile\(environmentPath\)/);
+  assert.match(startScript, /node_modules\/next\/dist\/bin\/next/);
+});
+
 test("defines the private administrator login without public account flows", async () => {
   const [loginPage, loginForm] = await Promise.all([
     readFile(new URL("login/page.tsx", appRoot), "utf8"),
@@ -66,6 +80,19 @@ test("keeps operational controls and destructive confirmations visible", async (
   assert.match(publications, /Publicar em teste/i);
 });
 
+test("uses one serialized queue contract for initial render and refreshes", async () => {
+  const [queuePage, queueRoute, queueApplication] = await Promise.all([
+    readFile(new URL("(private)/filas/page.tsx", appRoot), "utf8"),
+    readFile(new URL("api/queues/route.ts", appRoot), "utf8"),
+    readFile(new URL("../lib/queues/application.ts", appRoot), "utf8"),
+  ]);
+
+  assert.match(queuePage, /queueWorkspaceView/);
+  assert.match(queueRoute, /queueWorkspaceView/);
+  assert.match(queueApplication, /deliveries:\s*item\.deliveries\.map/);
+  assert.match(queueApplication, /channels:\s*queue\.targets\.map/);
+});
+
 test("keeps WhatsApp QR control server-side and live delivery disabled", async () => {
   const [route, application, manager, worker] = await Promise.all([
     readFile(new URL("api/whatsapp/[action]/route.ts", appRoot), "utf8"),
@@ -91,7 +118,8 @@ test("keeps the main dashboard focused on one-click Shopee queueing", async () =
   ]);
   assert.match(dashboard, /Postagens automáticas/);
   assert.match(dashboard, /Ativar automação/);
-  assert.match(quickOffer, /Converter e colocar na fila/);
+  assert.match(quickOffer, /Converter e visualizar/);
+  assert.match(quickOffer, /Confirmar e colocar na fila/);
   assert.match(quickOffer, /affiliateConfirmed/);
   assert.match(products, /dailyStartTime:\s*"08:00"/);
   assert.match(products, /dailyEndTime:\s*"22:00"/);

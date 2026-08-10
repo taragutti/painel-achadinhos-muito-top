@@ -9,16 +9,33 @@ import type {
   AvailableChannel,
   HealthResult,
   ProviderStatus,
+  SafeHttpClient,
   SendInput,
   SendResult,
   WhatsAppConnector,
 } from "@achadinhos/providers";
+import { SafeHttpClient as ProductImageClient } from "@achadinhos/providers";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import pino from "pino";
 import { safeLogger } from "./safe-logger.js";
+import { downloadWhatsAppImage } from "./whatsapp-image.js";
 
 type StoredSelection = { groupId: string; groupName: string };
+const DEFAULT_IMAGE_TIMEOUT_MS = 15_000;
+const DEFAULT_IMAGE_MAX_BYTES = 5_242_880;
+const ABSOLUTE_IMAGE_MAX_BYTES = 10_485_760;
+
+function boundedPositiveInteger(
+  value: string | undefined,
+  fallback: number,
+  maximum: number,
+): number {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0
+    ? Math.min(parsed, maximum)
+    : fallback;
+}
 
 export class WorkerWhatsAppConnector implements WhatsAppConnector {
   private socket: WASocket | null = null;
@@ -29,11 +46,25 @@ export class WorkerWhatsAppConnector implements WhatsAppConnector {
   private reconnectTimer: NodeJS.Timeout | null = null;
   private selectedGroup: StoredSelection | null = null;
   private starting: Promise<void> | null = null;
+  private readonly imageClient: SafeHttpClient;
 
   constructor(
     private readonly sessionDirectory: string,
     initialAllowedGroupId = "",
   ) {
+    this.imageClient = new ProductImageClient({
+      timeoutMs: boundedPositiveInteger(
+        process.env.WHATSAPP_IMAGE_TIMEOUT_MS,
+        DEFAULT_IMAGE_TIMEOUT_MS,
+        60_000,
+      ),
+      maxResponseBytes: boundedPositiveInteger(
+        process.env.PRODUCT_IMAGE_MAX_BYTES,
+        DEFAULT_IMAGE_MAX_BYTES,
+        ABSOLUTE_IMAGE_MAX_BYTES,
+      ),
+      cacheTtlMs: 60_000,
+    });
     if (initialAllowedGroupId.endsWith("@g.us")) {
       this.selectedGroup = {
         groupId: initialAllowedGroupId,
@@ -129,8 +160,9 @@ export class WorkerWhatsAppConnector implements WhatsAppConnector {
 
   async sendImage(input: SendInput & { imageUrl: string }): Promise<SendResult> {
     this.assertLiveDestination(input.destination);
+    const image = await downloadWhatsAppImage(input.imageUrl, this.imageClient);
     const result = await this.socket!.sendMessage(input.destination, {
-      image: { url: input.imageUrl },
+      image,
       caption: input.text,
     });
     return { success: true, providerMessageId: result?.key.id ?? undefined };

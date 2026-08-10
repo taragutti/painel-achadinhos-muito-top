@@ -17,6 +17,7 @@ export class QueueRepository {
   clearPending(queueId: string) { return this.prisma.queueItem.updateMany({ where: { queueId, status: { in: ["PENDING", "SCHEDULED", "PAUSED"] } }, data: { status: "CANCELLED" } }); }
   removePendingPublication(publicationId: string) { return this.prisma.queueItem.updateMany({ where: { publicationId, status: { in: ["PENDING", "SCHEDULED", "PAUSED"] } }, data: { status: "CANCELLED" } }); }
   retryFailedItem(id: string) { return this.prisma.queueItem.updateMany({ where: { id, status: { in: ["FAILED", "PAUSED"] } }, data: { status: "PENDING", availableAt: null, scheduledFor: null } }); }
+  removeItem(id: string) { return this.prisma.queueItem.updateMany({ where: { id, status: { not: "CANCELLED" } }, data: { status: "CANCELLED" } }); }
   updateItem(id: string, data: { status?: QueueItemStatus; priority?: number; position?: number; availableAt?: Date | null; scheduledFor?: Date | null }) { return this.prisma.queueItem.update({ where: { id }, data }); }
   async duplicateItem(id: string) { const source = await this.prisma.queueItem.findUniqueOrThrow({ where: { id } }); return this.enqueue(source.queueId, source.publicationId, source.priority); }
   async reorder(queueId: string, orderedIds: string[]) { await this.prisma.$transaction(orderedIds.map((id, position) => this.prisma.queueItem.updateMany({ where: { id, queueId }, data: { position: position + 1 } }))); }

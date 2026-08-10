@@ -2,6 +2,20 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+test("loads the single root environment file during worker development", async () => {
+  const [packageJson, startScript] = await Promise.all([
+    readFile(new URL("../package.json", import.meta.url), "utf8").then(JSON.parse),
+    readFile(
+      new URL("../../../scripts/start-worker-dev.mjs", import.meta.url),
+      "utf8",
+    ),
+  ]);
+
+  assert.match(packageJson.scripts.dev, /start-worker-dev\.mjs/);
+  assert.match(startScript, /process\.loadEnvFile\(environmentPath\)/);
+  assert.match(startScript, /node_modules\/tsx\/dist\/cli\.mjs/);
+});
+
 test("worker handles graceful termination without revoking the WhatsApp session", async () => {
   const source = await readFile(
     new URL("../src/index.ts", import.meta.url),
@@ -14,6 +28,8 @@ test("worker handles graceful termination without revoking the WhatsApp session"
   assert.match(source, /whatsappConnector\.disconnect\(\)/);
   assert.match(source, /closeServer\(healthServer\)/);
   assert.match(source, /disconnectPrisma\(\)/);
+  assert.match(source, /installSafeConsoleGuard\(\)/);
+  assert.match(source, /shouldAutostartWhatsapp\(process\.env\)/);
   assert.doesNotMatch(source, /revokeSession\(\)/);
 });
 

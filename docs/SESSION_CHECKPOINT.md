@@ -1,28 +1,51 @@
 # Checkpoint da sessão
 
-Data: 2026-07-30
+Data: 2026-08-10
 
 ## Estado confirmado
 
 - Homologação local aprovada pelo preflight.
-- PostgreSQL local preservado e administrador cadastrado.
-- Docker Desktop voltou a responder.
-- Worker em container está `healthy` na porta local `9464`.
-- `/health` protegido respondeu HTTP 200.
-- Providers mock ativos e `SEND_LIVE=false`.
-- Testes de configuração passaram e o build do worker foi concluído.
+- PostgreSQL de homologação preservado, com 8 migrations aplicadas e schema atualizado.
+- Providers mock ativos com `DEMO_MODE=true`, `PROVIDER_MODE=mock`, `MOCK_PROVIDERS=true` e `SEND_LIVE=false`.
+- Operação global pausada, sem itens pendentes ou em processamento ao encerrar os testes.
+- Web, worker e contêiner PostgreSQL usados nos testes foram encerrados.
+- Nenhuma mensagem real de WhatsApp ou Telegram foi enviada.
 
-## Correções recentes
+## Fluxos validados
 
-- Imagem do worker reconstruída sem cache após manifesto JSON corrompido.
-- `WORKER_DATABASE_URL` usa `host.docker.internal` para alcançar o PostgreSQL do Mac.
-- `npm run env:use-local-db -- achadinhos-homolog-20260728` prepara as duas URLs sem imprimir credenciais.
+- Login administrativo local.
+- Importação determinística de link fictício da Shopee sem acesso à API externa.
+- Prévia da mensagem e confirmação explícita antes do enfileiramento.
+- Persistência do produto, publicação e item da fila.
+- Processamento pelo provider mock e entrega registrada como enviada no histórico.
+- Pausa global, pausa e retomada da fila, adição e remoção idempotente de item pendente.
+- Tela de canais com worker disponível, indisponível e recuperado, sem iniciar conexão real automaticamente no modo mock.
+- Dashboard final com operação pausada, fila vazia e zero falhas atuais.
+- Verificação visual final sem erros de console e com um único elemento `main` por página testada.
+
+## Correções concluídas
+
+- `npm run dev:web` e `npm run dev:worker` carregam com segurança o único `.env` da raiz.
+- O fluxo rápido da Shopee mostra a prévia da mensagem antes de confirmar a fila.
+- A tela de canais diferencia worker offline de WhatsApp desconectado e remove o aviso obsoleto após a recuperação.
+- O modo mock não inicializa automaticamente a sessão real do WhatsApp.
+- Logs não estruturados de dependências são suprimidos antes que detalhes internos de sessão cheguem ao terminal.
+- O worker baixa imagens por cliente HTTP seguro, limita tamanho e tempo e valida a assinatura do arquivo.
+- O carregamento inicial e os refreshes da fila usam o mesmo contrato serializado.
+- As raízes dos gerenciadores de fila e canais não criam elementos `main` aninhados.
+
+## Validação de 2026-08-10
+
+- `npm test`: aprovado — 69 testes no total, sem falhas.
+- Build de produção do Next.js e builds TypeScript: aprovados pela pipeline de testes.
+- `npm run typecheck`: aprovado.
+- `npm run lint`: aprovado.
+- `npm run preflight:homologation`: configuração aprovada.
+- `prisma migrate status`: banco atualizado, 8 migrations encontradas.
+- E2E local no navegador: aprovado em perfil mock.
 
 ## Próxima etapa segura
 
-1. Iniciar a aplicação web local.
-2. Testar login e importação mock de uma oferta.
-3. Testar enfileiramento e agendamento sem publicação real.
-4. Planejar certificação separada de Shopee e WhatsApp.
+O projeto está pronto para revisão final e versionamento local. Certificação de credenciais reais, envio real, deploy, publicação, push e abertura de PR permanecem fora deste checkpoint e exigem uma etapa separada e explicitamente autorizada.
 
 Não fazer deploy, push, reset do Docker, `prisma db push`, `prisma migrate reset` ou envio real.

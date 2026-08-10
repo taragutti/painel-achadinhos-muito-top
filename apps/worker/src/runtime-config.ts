@@ -1,5 +1,17 @@
 type WorkerEnvironment = Readonly<Record<string, string | undefined>>;
 
+export function shouldAutostartWhatsapp(
+  environment: WorkerEnvironment = process.env,
+): boolean {
+  return (
+    environment.WHATSAPP_ENABLED === "true" &&
+    environment.SEND_LIVE === "true" &&
+    environment.PROVIDER_MODE === "live" &&
+    environment.MOCK_PROVIDERS === "false" &&
+    environment.DEMO_MODE !== "true"
+  );
+}
+
 export function validateWorkerEnvironment(
   environment: WorkerEnvironment = process.env,
 ): void {
