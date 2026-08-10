@@ -4,7 +4,7 @@ This checklist is for a separately approved production environment. The local ho
 
 ## Release candidate evidence
 
-The published `v0.1.0-rc.3` candidate passed 75 tests, lint, typecheck, production build, homologation preflight and the production-dependency audit. PR #2 is merged, CI passed on merge commit `405158bb3ab0f9c231d5abea067728b7e29129f2`, and the matching Vercel production deployment is `READY`. The subsequent local short-retention image-flow package passes 76 tests. Production database backup, authenticated health, permanent worker provisioning and operational approval remain pending.
+The published `v0.1.0-rc.3` candidate and the subsequent short-retention Shopee image flow passed 76 tests, lint, typecheck, production build and the production-dependency audit. PR #3 is merged, CI passed on merge commit `e0820f0a65266b211f682a41325a047016765b50`, and Vercel production deployment `dpl_BPiu9bF6uteu7F7SoBWx3tqq1zsH` is `READY`. Production database backup, authenticated health, permanent worker provisioning and operational approval remain pending.
 
 ## 1. Scope and approval
 
