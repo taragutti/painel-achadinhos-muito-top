@@ -31,7 +31,7 @@ O worker usa `DEMO_MODE=true`, `PROVIDER_MODE=mock` e `SEND_LIVE=false` por padr
 
 ## Aplicação web
 
-O dashboard é uma aplicação Next.js para um único administrador. Todas as páginas internas revalidam a sessão no servidor; mutações validam origem e entrada. Em Vercel, configure apenas a aplicação web, PostgreSQL, secrets e armazenamento durável de imagens. O worker e a sessão do WhatsApp não podem executar em Functions da Vercel.
+O dashboard é uma aplicação Next.js para um único administrador. Todas as páginas internas revalidam a sessão no servidor; mutações validam origem e entrada. Em Vercel, configure apenas a aplicação web, PostgreSQL e secrets. O fluxo aprovado usa diretamente as imagens públicas retornadas pela Shopee; uploads manuais ficam desabilitados em produção enquanto não houver armazenamento durável. O worker e a sessão do WhatsApp não podem executar em Functions da Vercel.
 
 O endpoint `GET /api/health` exige `Authorization: Bearer <APP_HEALTH_TOKEN>` e verifica a conectividade com o banco sem retornar detalhes de credenciais.
 

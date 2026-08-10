@@ -6,7 +6,7 @@ Keep `DEMO_MODE=true`, `PROVIDER_MODE=mock`, `SEND_LIVE=false`, `MOCK_PROVIDERS=
 
 ## Web runbook
 
-Build with `npm run build --workspace=@achadinhos/web` and start with `npm run start --workspace=@achadinhos/web`. Configure secrets in the runtime secret manager, never in source. Monitor `/api/health` with its bearer token. A database failure returns 503 without connection details. Vercel may host the web application, but uploaded images require durable object storage rather than its ephemeral filesystem.
+Build with `npm run build --workspace=@achadinhos/web` and start with `npm run start --workspace=@achadinhos/web`. Configure secrets in the runtime secret manager, never in source. Monitor `/api/health` with its bearer token. A database failure returns 503 without connection details. The approved Vercel flow uses marketplace image URLs directly and disables manual uploads; enabling file uploads later requires durable object storage.
 
 ## Worker runbook
 
@@ -34,7 +34,7 @@ Before every release, create an encrypted PostgreSQL backup and restore it into 
 - Restore the latest backup in isolation.
 - Validate TLS, private worker networking and secret-manager access.
 - Test login throttling behind the real proxy and ensure forwarded IP headers are sanitized.
-- Replace local uploads with durable private object storage.
+- Keep manual production uploads disabled unless durable private object storage is introduced.
 - Put URL imports behind egress filtering to mitigate DNS rebinding.
 - Review provider limits, authorized groups and the concrete WhatsApp connector.
 - Run a separately approved test against dedicated destinations; live delivery is not part of automated tests.

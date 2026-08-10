@@ -32,6 +32,19 @@ test("uses the stable Vercel production URL instead of a loopback APP_URL", asyn
   assert.match(publicUrl, /isLoopback\(explicitUrl\.hostname\)/);
 });
 
+test("uses the Shopee image URL directly and disables production file uploads", async () => {
+  const [importer, uploadRoute] = await Promise.all([
+    readFile(new URL("../components/products/ProductImporterForm.tsx", appRoot), "utf8"),
+    readFile(new URL("api/products/images/route.ts", appRoot), "utf8"),
+  ]);
+
+  assert.match(importer, /product\.storedImageUrl \|\| product\.originalImageUrl/);
+  assert.doesNotMatch(importer, /ensureOwnedImage|form\.set\("remoteUrl"/);
+  assert.match(importer, /usada diretamente da origem/);
+  assert.match(uploadRoute, /VERCEL_ENV === "production"/);
+  assert.match(uploadRoute, /status: 503/);
+});
+
 test("passes deployment configuration through the Turborepo build boundary", async () => {
   const turbo = await readFile(
     new URL("../../../turbo.json", appRoot),

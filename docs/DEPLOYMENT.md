@@ -7,10 +7,10 @@ This guide describes a future safe release. No deployment is performed by this r
 - Private Next.js application running on a Node.js-compatible host, required by Prisma/PostgreSQL sessions.
 - Long-running Node.js worker with controlled outbound network access.
 - Managed PostgreSQL with backups and point-in-time recovery.
-- Managed object storage for creative assets.
+- Managed object storage only if manual creative-asset uploads are enabled later.
 - Central secret manager for database and provider credentials.
 
-The web application and background worker have different process lifecycles. Production hosting must be selected only after confirming Node.js support, a persistent worker, private access, PostgreSQL connectivity, asset storage, and secret injection. The legacy Cloudflare/vinext packaging files are preserved for reference but are not the active authentication runtime.
+The web application and background worker have different process lifecycles. Production hosting must be selected only after confirming Node.js support, a persistent worker, private access, PostgreSQL connectivity and secret injection. Add asset storage only if manual uploads are enabled later. The legacy Cloudflare/vinext packaging files are preserved for reference but are not the active authentication runtime.
 
 The WhatsApp connector must run only in the long-running worker with persistent session storage. It must never run in a Vercel Function or the Next.js dashboard. Keep `SEND_LIVE=false` and `MOCK_PROVIDERS=true` until the concrete WhatsApp client, authorized group and credentials have been separately reviewed.
 
@@ -30,7 +30,9 @@ Stop the worker, take and verify a restorable PostgreSQL backup, review every ve
 
 ## Web on Vercel
 
-Configure the web workspace with `apps/web` as the Root Directory, Node.js 24.x, `DATABASE_URL`, `APP_URL`, administrator/session variables, `APP_ENCRYPTION_KEY`, `APP_HEALTH_TOKEN`, `DEMO_MODE=true`, `SEND_LIVE=false` and durable image storage. `APP_URL` should be the canonical HTTPS production URL; when it is absent or points to loopback on Vercel, the application falls back to `VERCEL_PROJECT_PRODUCTION_URL` and then `VERCEL_URL`. Do not place the WhatsApp client, session files or permanent queue loop in Vercel Functions. Restrict dashboard ingress with an additional access layer when possible.
+Configure the web workspace with `apps/web` as the Root Directory, Node.js 24.x, `DATABASE_URL`, `APP_URL`, administrator/session variables, `APP_ENCRYPTION_KEY`, `APP_HEALTH_TOKEN`, `DEMO_MODE=true` and `SEND_LIVE=false`. `APP_URL` should be the canonical HTTPS production URL; when it is absent or points to loopback on Vercel, the application falls back to `VERCEL_PROJECT_PRODUCTION_URL` and then `VERCEL_URL`. Do not place the WhatsApp client, session files or permanent queue loop in Vercel Functions. Restrict dashboard ingress with an additional access layer when possible.
+
+The supported production product flow keeps the public marketplace image URL returned by the Shopee import and does not create an owned copy. The worker downloads that URL only when processing the publication. Manual file uploads are disabled in Vercel production; enable them only after adding reviewed durable object storage. Marketplace URLs can change or expire, so queue and deliver products within the operator's short retention window.
 
 Configure `WORKER_API_URL` and the same strong `WORKER_API_TOKEN` in Vercel and in the worker host. The worker must expose its configured `PORT` over HTTPS, bind to `0.0.0.0`, and mount `WHATSAPP_SESSION_DIR` on a persistent private volume. Never mount that directory in the web deployment or commit its contents.
 

@@ -1,12 +1,26 @@
-# Handoff da release candidate
+# Handoff e aceite da release candidate
 
 Data de preparação: 2026-08-10
 
-Este documento entrega o caminho para publicar a homologação já validada. Ele não autoriza envio real, push automático, deploy automático ou alteração destrutiva de banco.
+Este documento registra a publicação web já validada e o caminho restante para concluir o worker permanente. Ele não autoriza envio real, push automático, deploy automático ou alteração destrutiva de banco.
+
+## Estado externo verificado
+
+- PR [#2](https://github.com/taragutti/painel-achadinhos-muito-top/pull/2) integrado em `main` em 2026-08-10.
+- Commit de merge: `405158bb3ab0f9c231d5abea067728b7e29129f2`.
+- Workflow [Validate release candidate](https://github.com/taragutti/painel-achadinhos-muito-top/actions/runs/31412083584) concluído com sucesso no commit de merge.
+- Deploy de produção Vercel `dpl_EF7cH6LEtHdLcuVVq7Ke8KXNgi3b` em estado `READY`.
+- URL canônica: <https://painel-achadinhos-muito-top-web.vercel.app>.
+- Login público respondeu HTTP 200, com cabeçalhos de segurança e metadados Open Graph em HTTPS.
+- A consulta sem credencial ao health check protegido respondeu HTTP 401, conforme o desenho de segurança.
+- Não foram encontrados erros `error` ou `fatal` nos logs de runtime durante a validação.
+- Produção web permanece em homologação segura: providers mock e `SEND_LIVE=false`, conforme configuração confirmada pelo operador.
+
+O health check autenticado com banco e o worker permanente ainda precisam de aceite operacional. O fluxo aprovado usa a imagem pública da Shopee e não exige armazenamento próprio. Nenhum secret foi lido ou registrado nesta validação.
 
 ## Estado preparado
 
-- Candidata local: `v0.1.0-rc.3`.
+- Candidata publicada: `v0.1.0-rc.3`.
 - Branch de trabalho: `codex/production-finish`.
 - Repositório: `taragutti/painel-achadinhos-muito-top`.
 - Projeto web Vercel: `painel-achadinhos-muito-top-web`.
@@ -23,18 +37,18 @@ Este documento entrega o caminho para publicar a homologação já validada. Ele
 5. Workflow de CI somente para validação, sem etapa de deploy.
 6. Template de PR com travas operacionais explícitas.
 
-O PR anterior foi integrado antes das correções finais. Por isso, a publicação deve usar um novo PR da branch `codex/production-finish` para `main`.
+As correções finais foram integradas pelo PR #2. Alterações posteriores devem usar outro PR e repetir CI, preview e aceite de produção.
 
-## Atualização manual do GitHub
+## Atualização manual do GitHub — concluída
 
-O PR draft #2 já existe. Depois de revisar o diff local do RC3, publique somente o commit incremental e a nova tag:
+Os comandos abaixo foram executados pelo operador durante a publicação do RC3:
 
 ```sh
 git push origin codex/production-finish
 git push origin v0.1.0-rc.3
 ```
 
-Depois, aguarde novamente o workflow **Validate release candidate** e valide o novo preview criado pela integração da Vercel. A tag final `v0.1.0` deve ser criada somente depois do merge e da aprovação do deploy de produção.
+O workflow, o preview e o deploy de produção foram aprovados. A tag final `v0.1.0` continua reservada para depois do health check autenticado e do worker permanente saudável.
 
 ## Configuração web na Vercel
 
@@ -50,30 +64,29 @@ Confirme no projeto `painel-achadinhos-muito-top-web`:
 - `WORKER_API_URL`: endpoint HTTPS privado do worker permanente.
 - `DEMO_MODE=true`, `PROVIDER_MODE=mock`, `MOCK_PROVIDERS=true`, `SEND_LIVE=false` durante preview, deploy e smoke test.
 - Credenciais da Shopee somente quando a integração real for aprovada.
+- Imagens de produtos: usar diretamente a URL pública retornada pela Shopee dentro da janela operacional curta; uploads manuais permanecem desabilitados na produção.
 
 Não copiar valores reais para este documento, GitHub Actions, comentários de PR ou comandos compartilhados.
 
-## Validação do preview
+## Validação do preview — concluída
 
-1. Confirmar que o SHA exibido pela Vercel corresponde ao head do novo PR.
-2. Confirmar build `READY`.
-3. Abrir login e verificar cabeçalhos de segurança.
-4. Confirmar que Open Graph aponta para HTTPS, nunca `localhost`.
-5. Testar login administrativo e navegação com banco de homologação isolado.
-6. Executar o fluxo Shopee → prévia → fila → provider mock → histórico.
-7. Confirmar operação pausada, fila vazia e nenhuma entrega real.
-8. Verificar logs e erros de runtime sem expor bodies, destinos ou credenciais.
+1. SHA do preview correspondente ao head aprovado: concluído.
+2. Build `READY`: concluído.
+3. Login e cabeçalhos de segurança: concluído.
+4. Open Graph em HTTPS, sem `localhost`: concluído.
+5. Login administrativo e navegação com banco isolado: validado na homologação local; repetir no aceite autenticado de produção.
+6. Fluxo Shopee → prévia → fila → provider mock → histórico: validado na homologação local.
+7. Operação pausada, fila vazia e nenhuma entrega real: validado na homologação local.
+8. Logs de runtime sem erros fatais e sem secrets expostos: concluído para a janela do deploy.
 
-## Promoção para produção
+## Promoção web para produção — concluída
 
-Depois de CI e preview aprovados:
-
-1. integrar o novo PR em `main`;
-2. aguardar o deploy automático da Vercel;
-3. conferir o SHA do deploy, HTTP 200 e erros de runtime;
-4. validar o health check protegido da web;
-5. manter filas pausadas e entrega real desabilitada;
-6. criar a tag final somente após o aceite operacional.
+1. PR integrado em `main`: concluído.
+2. Deploy automático da Vercel: concluído.
+3. SHA, HTTP 200 e erros de runtime: concluído.
+4. Proteção do health check: concluída; resposta autenticada com banco ainda pendente.
+5. Filas pausadas e entrega real desabilitada: mantido.
+6. Tag final: pendente até o aceite operacional completo.
 
 ## Worker permanente
 

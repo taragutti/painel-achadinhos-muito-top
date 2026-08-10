@@ -6,6 +6,7 @@ import { storeRemoteImage, storeUploadedImage } from "@/lib/products/storage";
 export async function POST(request: Request) {
   if (!await getAuthenticatedAdmin()) return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
   if (!hasValidRequestOrigin(request)) return NextResponse.json({ error: "Solicitação inválida." }, { status: 403 });
+  if (process.env.VERCEL_ENV === "production") return NextResponse.json({ error: "O envio manual de imagens não está habilitado neste ambiente." }, { status: 503 });
   try {
     const form = await request.formData();
     const file = form.get("file");
