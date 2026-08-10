@@ -88,14 +88,22 @@ export function QueueManager({
   });
   const [publicationId, setPublicationId] = useState(publications[0]?.id ?? "");
   async function refresh() {
-    const response = await fetch("/api/queues");
-    if (!response.ok) return;
-    const data = (await response.json()) as {
-      queues: Queue[];
-      paused: boolean;
-    };
-    setQueues(data.queues);
-    setGlobalPausedState(data.paused);
+    try {
+      const response = await fetch("/api/queues", { cache: "no-store" });
+      const data = await response.json().catch(() => null) as {
+        queues?: Queue[];
+        paused?: boolean;
+        error?: string;
+      } | null;
+      if (!response.ok || !data?.queues) {
+        setMessage(data?.error ?? "Não foi possível atualizar a fila.");
+        return;
+      }
+      setQueues(data.queues);
+      setGlobalPausedState(Boolean(data.paused));
+    } catch {
+      setMessage("Não foi possível atualizar a fila. Tente novamente.");
+    }
   }
   async function create() {
     const intervalMinutes =
@@ -128,21 +136,25 @@ export function QueueManager({
     priority?: number,
   ) {
     if (!selected) return;
-    const response = await fetch(`/api/queues/${selected.id}/actions`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        action: actionName,
-        itemId,
-        orderedItemIds,
-        priority,
-      }),
-    });
-    const data = (await response.json()) as { error?: string };
-    setMessage(
-      response.ok ? "Fila atualizada." : (data.error ?? "Ação não concluída."),
-    );
-    if (response.ok) await refresh();
+    try {
+      const response = await fetch(`/api/queues/${selected.id}/actions`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action: actionName,
+          itemId,
+          orderedItemIds,
+          priority,
+        }),
+      });
+      const data = await response.json().catch(() => null) as { error?: string } | null;
+      setMessage(
+        response.ok ? "Fila atualizada." : (data?.error ?? "Ação não concluída."),
+      );
+      if (response.ok) await refresh();
+    } catch {
+      setMessage("Não foi possível atualizar a fila. Tente novamente.");
+    }
   }
   async function addItem() {
     if (!selected || !publicationId) return;
@@ -194,7 +206,7 @@ export function QueueManager({
   }
   const estimates = buildEstimates(selected);
   return (
-    <main className="page-content">
+    <div className="page-content">
       <header className="page-heading">
         <div>
           <span className="eyebrow">ORQUESTRAÇÃO</span>
@@ -551,6 +563,6 @@ export function QueueManager({
           setConfirmClear(false);
         }}
       />
-    </main>
+    </div>
   );
 }

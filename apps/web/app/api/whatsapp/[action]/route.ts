@@ -44,5 +44,8 @@ export async function POST(request: Request, context: Context) {
 }
 
 function safeMessage(error: unknown) {
+  if (error instanceof TypeError && /fetch failed|failed to fetch/i.test(error.message)) {
+    return "O worker do WhatsApp está offline. Inicie o worker e tente novamente.";
+  }
   return error instanceof Error ? error.message.slice(0, 200) : "Não foi possível controlar o WhatsApp.";
 }

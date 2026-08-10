@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 type ChannelRow = { id: string; name: string; platform: "WHATSAPP" | "TELEGRAM"; isActive: boolean };
-type ConnectionState = "DISCONNECTED" | "WAITING_QR" | "CONNECTING" | "CONNECTED" | "ERROR";
+type ConnectionState = "DISCONNECTED" | "WAITING_QR" | "CONNECTING" | "CONNECTED" | "ERROR" | "WORKER_OFFLINE";
 type StatusResponse = {
   status: { state: ConnectionState; configured: boolean; lastError?: string };
   qrImage: string | null;
@@ -21,6 +21,7 @@ const stateLabels: Record<ConnectionState, string> = {
   CONNECTING: "Conectando",
   CONNECTED: "Conectado",
   ERROR: "Conexão interrompida",
+  WORKER_OFFLINE: "Worker indisponível",
 };
 
 export function ChannelManager({ channels }: { channels: ChannelRow[] }) {
@@ -29,26 +30,31 @@ export function ChannelManager({ channels }: { channels: ChannelRow[] }) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [workerOffline, setWorkerOffline] = useState(false);
 
   const refreshStatus = useCallback(async () => {
     const response = await fetch("/api/whatsapp/status", { cache: "no-store" });
     const data = await response.json() as StatusResponse;
     if (!response.ok) throw new Error(data.error ?? "Worker indisponível.");
+    setWorkerOffline(false);
+    setMessage((current) => current.startsWith("O worker do WhatsApp") ? "" : current);
     setConnection(data);
     if (data.status.state === "CONNECTED") {
       const groupsResponse = await fetch("/api/whatsapp/groups", { cache: "no-store" });
       const groupsData = await groupsResponse.json() as { groups?: Group[] };
       if (groupsResponse.ok) setGroups(groupsData.groups ?? []);
-    }
+    } else setGroups([]);
   }, []);
 
   useEffect(() => {
-    const initial = window.setTimeout(() => {
-      void refreshStatus().catch((error) => setMessage(error instanceof Error ? error.message : "Worker indisponível."));
-    }, 0);
-    const timer = window.setInterval(() => {
-      void refreshStatus().catch(() => undefined);
-    }, 3_000);
+    function handleRefreshError() {
+      setWorkerOffline(true);
+      setConnection(null);
+      setGroups([]);
+      setMessage("O worker do WhatsApp está offline. Inicie o worker para consultar a conexão.");
+    }
+    const initial = window.setTimeout(() => { void refreshStatus().catch(handleRefreshError); }, 0);
+    const timer = window.setInterval(() => { void refreshStatus().catch(handleRefreshError); }, 3_000);
     return () => {
       window.clearTimeout(initial);
       window.clearInterval(timer);
@@ -92,9 +98,9 @@ export function ChannelManager({ channels }: { channels: ChannelRow[] }) {
     }
   }
 
-  const state = connection?.status.state ?? "DISCONNECTED";
+  const state = workerOffline ? "WORKER_OFFLINE" : connection?.status.state ?? "DISCONNECTED";
   return (
-    <main className="page-content">
+    <div className="page-content">
       <header className="page-heading"><div><span className="eyebrow">WHATSAPP</span><h1>Grupos</h1><p>Leia o QR Code e autorize somente o grupo que receberá as ofertas.</p></div></header>
       {message && <p className="form-message warning" role="status">{message}</p>}
       <section className="content-card whatsapp-control">
@@ -103,7 +109,14 @@ export function ChannelManager({ channels }: { channels: ChannelRow[] }) {
           <span className={`status-pill ${state === "CONNECTED" ? "safe" : ""}`}>{stateLabels[state]}</span>
         </div>
 
-        {(state === "DISCONNECTED" || state === "ERROR") && (
+        {workerOffline && (
+          <div className="channel-create">
+            <span className="import-icon">!</span><h2>Worker do WhatsApp indisponível</h2><p>A tela não consegue consultar a conexão enquanto o worker estiver parado. Nenhuma mensagem será enviada automaticamente.</p>
+            <button className="secondary" onClick={() => { setMessage(""); void refreshStatus().catch(() => { setWorkerOffline(true); setMessage("O worker do WhatsApp ainda está offline."); }); }} disabled={busy}>Tentar novamente</button>
+          </div>
+        )}
+
+        {!workerOffline && (state === "DISCONNECTED" || state === "ERROR") && (
           <div className="channel-create">
             <span className="import-icon">◎</span><h2>Conectar o WhatsApp</h2><p>A conexão acontece somente no worker. Nenhuma mensagem será enviada nesta etapa.</p>
             <button className="primary" onClick={() => void command("connect")} disabled={busy}>{busy ? "Iniciando..." : "Gerar QR Code"}</button>
@@ -131,6 +144,6 @@ export function ChannelManager({ channels }: { channels: ChannelRow[] }) {
         )}
       </section>
       {channels.length > 0 && <p className="safe-note">Cadastro atual: {channels.filter((channel) => channel.platform === "WHATSAPP").map((channel) => channel.name).join(", ") || "nenhum"}. SEND_LIVE permanece false.</p>}
-    </main>
+    </div>
   );
 }

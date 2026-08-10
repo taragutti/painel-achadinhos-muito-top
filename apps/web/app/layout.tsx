@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { getPublicAppUrl } from "@/lib/runtime/public-url";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
+  metadataBase: getPublicAppUrl(),
   title: "Painel Achadinhos Muito Top",
   description: "Gestão inteligente de produtos, publicações e canais em um só lugar.",
   icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },

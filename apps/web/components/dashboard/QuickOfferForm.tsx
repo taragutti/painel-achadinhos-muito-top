@@ -1,9 +1,12 @@
 "use client";
 
 import {
+  DEFAULT_PRODUCT_TEMPLATE,
   productImportInputSchema,
   productSaveInputSchema,
+  renderMessageTemplate,
   type ProductSaveInput,
+  validateProviderMessage,
 } from "@achadinhos/shared";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -16,13 +19,15 @@ type ImportedProduct = Partial<ProductSaveInput> & {
 export function QuickOfferForm() {
   const router = useRouter();
   const [url, setUrl] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [preview, setPreview] = useState<ProductSaveInput | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
+  const [busy, setBusy] = useState<"import" | "queue" | null>(null);
   const [message, setMessage] = useState<{
     kind: "error" | "success";
     text: string;
   } | null>(null);
 
-  async function queueOffer(event: React.FormEvent<HTMLFormElement>) {
+  async function importOffer(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage(null);
     const parsedUrl = productImportInputSchema.safeParse({ url });
@@ -34,7 +39,7 @@ export function QuickOfferForm() {
       return;
     }
 
-    setBusy(true);
+    setBusy("import");
     try {
       const importResponse = await fetch("/api/products/import", {
         method: "POST",
@@ -77,10 +82,30 @@ export function QuickOfferForm() {
         );
       }
 
+      setWarnings(imported.warnings ?? []);
+      setPreview(product.data);
+    } catch (error) {
+      setMessage({
+        kind: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Não foi possível preparar a oferta.",
+      });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function confirmQueue() {
+    if (!preview) return;
+    setMessage(null);
+    setBusy("queue");
+    try {
       const saveResponse = await fetch("/api/products", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ product: product.data, intent: "QUEUE" }),
+        body: JSON.stringify({ product: preview, intent: "QUEUE" }),
       });
       const saved = (await saveResponse.json()) as {
         queued?: boolean;
@@ -97,6 +122,8 @@ export function QuickOfferForm() {
       }
 
       setUrl("");
+      setPreview(null);
+      setWarnings([]);
       setMessage({
         kind: "success",
         text: "Link afiliado criado. Oferta adicionada à fila de postagem.",
@@ -108,51 +135,117 @@ export function QuickOfferForm() {
         text:
           error instanceof Error
             ? error.message
-            : "Não foi possível preparar a oferta.",
+            : "Não foi possível colocar na fila.",
       });
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
+  const renderedPreview = preview
+    ? renderMessageTemplate(DEFAULT_PRODUCT_TEMPLATE, {
+        titulo: preview.title,
+        descricao: preview.description,
+        precoAtual: preview.currentPrice,
+        precoAnterior: preview.oldPrice,
+        cupom: preview.couponCode,
+        link: preview.affiliateUrl,
+        loja: preview.storeName,
+        marketplace: preview.marketplace,
+      })
+    : null;
+  const previewValidation = renderedPreview
+    ? validateProviderMessage(renderedPreview.text, "WHATSAPP", Boolean(preview?.originalImageUrl))
+    : null;
+
+  function discardPreview() {
+    setPreview(null);
+    setWarnings([]);
+    setMessage(null);
+  }
+
   return (
-    <section className="quick-offer-card">
-      <div className="quick-offer-copy">
-        <span className="eyebrow">NOVA OFERTA</span>
-        <h2>Cole o link da Shopee</h2>
-        <p>
-          O painel converte para afiliado, monta a mensagem e coloca na fila
-          automaticamente.
-        </p>
-      </div>
-      <form className="quick-offer-form" onSubmit={queueOffer}>
-        <label htmlFor="shopee-link">LINK DO PRODUTO</label>
-        <div>
-          <input
-            id="shopee-link"
-            value={url}
-            onChange={(event) => setUrl(event.target.value)}
-            placeholder="https://shopee.com.br/..."
-            inputMode="url"
-            autoComplete="url"
-            disabled={busy}
-          />
-          <button className="primary" disabled={busy}>
-            {busy ? (
-              <>
-                <span className="spinner" /> Convertendo...
-              </>
-            ) : (
-              "Converter e colocar na fila"
-            )}
-          </button>
+    <section className={`quick-offer-card${preview ? " has-preview" : ""}`}>
+      {preview && renderedPreview && previewValidation ? (
+        <div className="quick-offer-preview">
+          <div className="quick-offer-preview-heading">
+            <div>
+              <span className="eyebrow">PRÉVIA WHATSAPP</span>
+              <h2>Confira antes de colocar na fila</h2>
+              <p>{preview.title}</p>
+            </div>
+            <button className="text-button" type="button" onClick={discardPreview}>
+              Trocar link
+            </button>
+          </div>
+          <div className="quick-offer-preview-body">
+            <div className="quick-offer-product-summary">
+              <span className="eyebrow">PRODUTO IMPORTADO</span>
+              <strong>{preview.title}</strong>
+              <p>
+                {preview.storeName || "Loja não informada"}
+                {preview.currentPrice ? ` · R$ ${preview.currentPrice}` : ""}
+              </p>
+              {preview.affiliateConfirmed && <span className="confirmed-label">Link afiliado confirmado ✓</span>}
+            </div>
+            <div className="quick-offer-whatsapp">
+              <span className="eyebrow">MENSAGEM QUE SERÁ PREPARADA</span>
+              <div className="message-bubble whatsapp">
+                <pre>{renderedPreview.text}</pre>
+              </div>
+              <small className={previewValidation.valid ? "preview-valid" : "preview-invalid"}>
+                WhatsApp · {previewValidation.characters} caracteres
+              </small>
+            </div>
+          </div>
+          {warnings.map((warning) => <p className="form-message warning" role="status" key={warning}>{warning}</p>)}
+          {message && <p className={`form-message ${message.kind}`} role="status">{message.text}</p>}
+          <div className="quick-offer-preview-actions">
+            <button className="secondary" type="button" onClick={discardPreview} disabled={busy !== null}>Cancelar</button>
+            <button className="primary" type="button" onClick={() => void confirmQueue()} disabled={busy !== null || !previewValidation.valid}>
+              {busy === "queue" ? <><span className="spinner" /> Colocando na fila...</> : "Confirmar e colocar na fila"}
+            </button>
+          </div>
         </div>
-        {message && (
-          <p className={`form-message ${message.kind}`} role="status">
-            {message.text}
-          </p>
-        )}
-      </form>
+      ) : (
+        <>
+          <div className="quick-offer-copy">
+            <span className="eyebrow">NOVA OFERTA</span>
+            <h2>Cole o link da Shopee</h2>
+            <p>
+              O painel converte para afiliado, mostra a mensagem do WhatsApp e só depois coloca na fila.
+            </p>
+          </div>
+          <form className="quick-offer-form" onSubmit={importOffer}>
+            <label htmlFor="shopee-link">LINK DO PRODUTO</label>
+            <div>
+              <input
+                id="shopee-link"
+                value={url}
+                onChange={(event) => setUrl(event.target.value)}
+                placeholder="https://shopee.com.br/..."
+                inputMode="url"
+                autoComplete="url"
+                disabled={busy !== null}
+              />
+              <button className="primary" disabled={busy !== null}>
+                {busy === "import" ? (
+                  <>
+                    <span className="spinner" /> Convertendo...
+                  </>
+                ) : (
+                  "Converter e visualizar"
+                )}
+              </button>
+            </div>
+            {message && (
+              <p className={`form-message ${message.kind}`} role="status">
+                {message.text}
+              </p>
+            )}
+          </form>
+        </>
+      )}
     </section>
   );
 }

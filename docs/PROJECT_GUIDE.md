@@ -37,7 +37,7 @@ A configuração inicial da fila é uma publicação a cada 20 minutos, todos os
 - credenciais de produção da Shopee guardadas em um secret manager;
 - sessão WhatsApp criada no host permanente e grupo confirmado;
 - backup e restauração do PostgreSQL ensaiados;
-- revisão autorizada das dependências;
+- migração e nova auditoria do empacotamento legado `vinext` caso ele volte a ser usado;
 - teste operacional aprovado com um destino dedicado;
 - aprovação explícita para retirar o sistema do modo mock.
 

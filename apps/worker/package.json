@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "node ../../scripts/start-worker-dev.mjs",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit",
     "test": "node --test"
@@ -15,6 +15,7 @@
     "@achadinhos/shared": "*",
     "@whiskeysockets/baileys": "6.7.23",
     "pino": "9.14.0",
+    "sharp": "0.35.3",
     "ws": "8.21.0"
   },
   "devDependencies": {

@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { validateWorkerEnvironment } from "../dist/runtime-config.js";
+import {
+  shouldAutostartWhatsapp,
+  validateWorkerEnvironment,
+} from "../dist/runtime-config.js";
 
 const safeEnvironment = {
   DATABASE_URL:
@@ -60,5 +63,26 @@ test("accepts explicit live activation only with an enabled configured provider"
       WHATSAPP_ENABLED: "true",
       WHATSAPP_SESSION_DIR: "/var/lib/achadinhos/whatsapp-session",
     }),
+  );
+});
+
+test("autostarts WhatsApp only for an explicit fully live configuration", () => {
+  assert.equal(
+    shouldAutostartWhatsapp({
+      ...safeEnvironment,
+      WHATSAPP_ENABLED: "true",
+    }),
+    false,
+  );
+  assert.equal(
+    shouldAutostartWhatsapp({
+      ...safeEnvironment,
+      SEND_LIVE: "true",
+      PROVIDER_MODE: "live",
+      MOCK_PROVIDERS: "false",
+      DEMO_MODE: "false",
+      WHATSAPP_ENABLED: "true",
+    }),
+    true,
   );
 });

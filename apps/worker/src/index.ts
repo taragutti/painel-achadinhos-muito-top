@@ -15,12 +15,16 @@ import {
   type MessagingProvider,
 } from "@achadinhos/providers";
 import { buildProductMessage, nextAllowedTime } from "@achadinhos/shared";
-import { safeLogger } from "./safe-logger.js";
+import { installSafeConsoleGuard, safeLogger } from "./safe-logger.js";
 import { WorkerWhatsAppConnector } from "./whatsapp-connector.js";
 import { startHealthServer, type WorkerHealthState } from "./health-server.js";
-import { validateWorkerEnvironment } from "./runtime-config.js";
+import {
+  shouldAutostartWhatsapp,
+  validateWorkerEnvironment,
+} from "./runtime-config.js";
 
 process.env.APP_RUNTIME = "worker";
+installSafeConsoleGuard();
 validateWorkerEnvironment(process.env);
 const interval = Number(process.env.WORKER_POLL_INTERVAL_MS ?? 5_000);
 const maxAttempts = Math.min(3, Number(process.env.DELIVERY_MAX_ATTEMPTS ?? 3));
@@ -245,7 +249,7 @@ function closeServer(server: Server): Promise<void> {
 safeLogger.info("worker.started", {
   runId: state.runId,
   mockProviders: shouldUseMock(process.env),
-  sendLive: false,
+  sendLive: process.env.SEND_LIVE === "true",
 });
 const healthServer = startHealthServer(
   state,
@@ -255,7 +259,7 @@ const healthServer = startHealthServer(
   Number(process.env.PORT ?? process.env.WORKER_HEALTH_PORT ?? 9464),
   process.env.WORKER_HEALTH_HOST ?? "127.0.0.1",
 );
-if (process.env.WHATSAPP_ENABLED === "true") {
+if (shouldAutostartWhatsapp(process.env)) {
   void whatsappConnector.connect().catch((error) => {
     safeLogger.error("whatsapp.start.failed", {
       errorType: error instanceof Error ? error.name : "UnknownError",

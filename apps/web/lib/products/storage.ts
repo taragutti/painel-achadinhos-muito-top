@@ -3,6 +3,7 @@ import { mkdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import sharp from "sharp";
 import { SafeHttpClient, validateImageSignature } from "@achadinhos/providers";
+import { getPublicAppUrl } from "@/lib/runtime/public-url";
 
 const allowedFormats = new Set(["jpeg", "png", "webp", "avif"]);
 
@@ -34,7 +35,7 @@ async function storeImageBuffer(buffer: Buffer) {
     sharp(buffer).rotate().resize({ width: 1400, height: 1400, fit: "inside", withoutEnlargement: true }).webp({ quality: 86 }).toFile(resolve(directory, fullName)),
     sharp(buffer).rotate().resize(320, 320, { fit: "cover" }).webp({ quality: 78 }).toFile(resolve(directory, thumbnailName)),
   ]);
-  const baseUrl = new URL(process.env.APP_URL ?? "http://localhost:3000");
+  const baseUrl = getPublicAppUrl();
   return { storedImageUrl: new URL(`/api/media/${fullName}`, baseUrl).href, thumbnailImageUrl: new URL(`/api/media/${thumbnailName}`, baseUrl).href };
 }
 

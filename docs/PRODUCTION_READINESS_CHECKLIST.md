@@ -2,6 +2,10 @@
 
 This checklist is for a separately approved production environment. The local homologation profile must remain mock-only.
 
+## Release candidate evidence
+
+The local `v0.1.0-rc.3` candidate has passed 75 tests, lint, typecheck, production build, homologation preflight and the production-dependency audit. These results prepare the candidate but do not complete any production item below. GitHub publication, Vercel preview, production database backup, permanent worker provisioning and operational approval must still be verified in their target environments.
+
 ## 1. Scope and approval
 
 - [ ] Confirm the production repository, Vercel project, worker host, PostgreSQL database, and WhatsApp account owner.
@@ -49,4 +53,3 @@ This checklist is for a separately approved production environment. The local ho
 - [ ] Review failures, retries, and queue timing after the first cycle.
 - [ ] Keep a rollback decision and owner documented.
 - [ ] Do not expand to additional groups or products until the first publication is reconciled.
-

@@ -4,6 +4,8 @@ Monorepo do dashboard privado e do fluxo de publicações para Telegram e WhatsA
 
 Comece pelo [guia completo do projeto](docs/PROJECT_GUIDE.md), que reúne o fluxo da Shopee ao WhatsApp, configuração, homologação, segurança, operação e estado atual.
 
+Para publicar a candidata já homologada, siga o [handoff da release](docs/RELEASE_HANDOFF.md) e a [checklist de produção](docs/PRODUCTION_READINESS_CHECKLIST.md). O [changelog](CHANGELOG.md) registra os marcos versionados.
+
 ## Estrutura
 
 ```text
