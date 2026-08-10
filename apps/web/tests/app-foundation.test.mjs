@@ -18,6 +18,20 @@ test("loads the single root environment file during local development", async ()
   assert.match(startScript, /node_modules\/next\/dist\/bin\/next/);
 });
 
+test("uses the stable Vercel production URL instead of a loopback APP_URL", async () => {
+  const [layout, storage, publicUrl] = await Promise.all([
+    readFile(new URL("layout.tsx", appRoot), "utf8"),
+    readFile(new URL("../lib/products/storage.ts", appRoot), "utf8"),
+    readFile(new URL("../lib/runtime/public-url.ts", appRoot), "utf8"),
+  ]);
+
+  assert.match(layout, /metadataBase:\s*getPublicAppUrl\(\)/);
+  assert.match(storage, /const baseUrl = getPublicAppUrl\(\)/);
+  assert.match(publicUrl, /VERCEL_PROJECT_PRODUCTION_URL/);
+  assert.match(publicUrl, /VERCEL_URL/);
+  assert.match(publicUrl, /isLoopback\(explicitUrl\.hostname\)/);
+});
+
 test("defines the private administrator login without public account flows", async () => {
   const [loginPage, loginForm] = await Promise.all([
     readFile(new URL("login/page.tsx", appRoot), "utf8"),

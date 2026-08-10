@@ -40,7 +40,7 @@ Data: 2026-08-10
 
 ## Validação de 2026-08-10
 
-- `npm test`: aprovado — 69 testes no total, sem falhas.
+- `npm test`: aprovado — 74 testes no total, sem falhas.
 - Build de produção do Next.js e builds TypeScript: aprovados pela pipeline de testes.
 - `npm run typecheck`: aprovado.
 - `npm run lint`: aprovado.
@@ -55,9 +55,12 @@ Data: 2026-08-10
 - Inspeção da imagem: usuário não-root `node`, healthcheck configurado, `DEMO_MODE=true`, `PROVIDER_MODE=mock`, `SEND_LIVE=false` e `WHATSAPP_ENABLED=false`.
 - Runtime da imagem validado em projeto Compose isolado: container saudável, endpoint protegido `/health` com HTTP 200 e log estruturado confirmando `mockProviders=true` e `sendLive=false`.
 - O container e a rede temporários foram removidos sem `-v`; o volume foi preservado e o PostgreSQL local voltou ao estado parado.
+- Pacote de publicação preparado com CI sem deploy, template de PR, changelog e handoff operacional.
+- URL pública da web validada para usar o domínio canônico ou as variáveis de sistema da Vercel em vez de `localhost`.
+- Workflow de CI validado como YAML e configurado com todas as travas de entrega real desabilitadas.
 
 ## Próxima etapa segura
 
-O projeto está pronto para revisão final e versionamento local. Se o empacotamento legado `vinext` voltar a ser usado, ele deve ser migrado e auditado separadamente antes da execução. Certificação de credenciais reais, envio real, deploy, publicação, push e abertura de PR permanecem fora deste checkpoint e exigem uma etapa separada e explicitamente autorizada.
+O projeto está pronto como `v0.1.0-rc.2` local para um novo PR da branch `codex/production-finish` para `main`. Siga `docs/RELEASE_HANDOFF.md`. Se o empacotamento legado `vinext` voltar a ser usado, ele deve ser migrado e auditado separadamente antes da execução. Certificação de credenciais reais, envio real, deploy, publicação, push e abertura de PR permanecem fora deste checkpoint e exigem uma etapa separada e explicitamente autorizada.
 
 Não fazer deploy, push, reset do Docker, `prisma db push`, `prisma migrate reset` ou envio real.
