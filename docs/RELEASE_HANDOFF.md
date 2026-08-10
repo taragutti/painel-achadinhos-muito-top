@@ -6,14 +6,14 @@ Este documento registra a publicação web já validada e o caminho restante par
 
 ## Estado externo verificado
 
-- PR [#2](https://github.com/taragutti/painel-achadinhos-muito-top/pull/2) integrado em `main` em 2026-08-10.
-- Commit de merge: `405158bb3ab0f9c231d5abea067728b7e29129f2`.
-- Workflow [Validate release candidate](https://github.com/taragutti/painel-achadinhos-muito-top/actions/runs/31412083584) concluído com sucesso no commit de merge.
-- Deploy de produção Vercel `dpl_EF7cH6LEtHdLcuVVq7Ke8KXNgi3b` em estado `READY`.
+- PR [#3](https://github.com/taragutti/painel-achadinhos-muito-top/pull/3) integrado em `main` em 2026-08-10, após o PR [#2](https://github.com/taragutti/painel-achadinhos-muito-top/pull/2).
+- Commit de merge atual: `e0820f0a65266b211f682a41325a047016765b50`.
+- Workflow [Validate release candidate](https://github.com/taragutti/painel-achadinhos-muito-top/actions/runs/31415468880) concluído com sucesso no commit de merge atual.
+- Deploy de produção Vercel `dpl_BPiu9bF6uteu7F7SoBWx3tqq1zsH` em estado `READY` e associado ao commit atual.
 - URL canônica: <https://painel-achadinhos-muito-top-web.vercel.app>.
 - Login público respondeu HTTP 200, com cabeçalhos de segurança e metadados Open Graph em HTTPS.
 - A consulta sem credencial ao health check protegido respondeu HTTP 401, conforme o desenho de segurança.
-- Não foram encontrados erros `error` ou `fatal` nos logs de runtime durante a validação.
+- Não foram encontrados erros `error` ou `fatal` nos logs de runtime durante a janela de validação do deploy atual.
 - Produção web permanece em homologação segura: providers mock e `SEND_LIVE=false`, conforme configuração confirmada pelo operador.
 
 O health check autenticado com banco e o worker permanente ainda precisam de aceite operacional. O fluxo aprovado usa a imagem pública da Shopee e não exige armazenamento próprio. Nenhum secret foi lido ou registrado nesta validação.
@@ -28,7 +28,7 @@ O health check autenticado com banco e o worker permanente ainda precisam de ace
 - Worker: processo/container permanente separado; nunca executar em Vercel Functions.
 - Entrega real: bloqueada por padrão com providers mock e `SEND_LIVE=false`.
 
-## O que será levado ao GitHub
+## O que foi levado ao GitHub
 
 1. Correções finais de homologação e segurança.
 2. Atualização de dependências de produção.
@@ -37,7 +37,7 @@ O health check autenticado com banco e o worker permanente ainda precisam de ace
 5. Workflow de CI somente para validação, sem etapa de deploy.
 6. Template de PR com travas operacionais explícitas.
 
-As correções finais foram integradas pelo PR #2. Alterações posteriores devem usar outro PR e repetir CI, preview e aceite de produção.
+As correções finais e o fluxo de imagens públicas da Shopee foram integrados pelos PRs #2 e #3. Alterações posteriores devem usar outro PR e repetir CI, preview e aceite de produção.
 
 ## Atualização manual do GitHub — concluída
 
@@ -48,7 +48,7 @@ git push origin codex/production-finish
 git push origin v0.1.0-rc.3
 ```
 
-O workflow, o preview e o deploy de produção foram aprovados. A tag final `v0.1.0` continua reservada para depois do health check autenticado e do worker permanente saudável.
+O workflow, o preview e os deploys de produção dos PRs #2 e #3 foram aprovados. A tag final `v0.1.0` continua reservada para depois do health check autenticado e do worker permanente saudável.
 
 ## Configuração web na Vercel
 
@@ -101,4 +101,4 @@ A publicação web não conclui o worker. Em um host separado com volume persist
 
 ## Critério de fechamento
 
-A release só estará fechada externamente quando o novo PR estiver integrado, a produção Vercel apontar para o commit aprovado, o worker permanente estiver saudável, a checklist de produção estiver assinada e a documentação registrar o SHA e a data do aceite.
+A etapa web está integrada, documentada e publicada em modo seguro. A release completa só estará fechada externamente quando o worker permanente estiver saudável, o health check autenticado confirmar o banco, a checklist de produção estiver assinada e a data do aceite operacional estiver registrada.
