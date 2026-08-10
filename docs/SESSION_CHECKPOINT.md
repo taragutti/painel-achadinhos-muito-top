@@ -40,7 +40,7 @@ Data: 2026-08-10
 
 ## Validação de 2026-08-10
 
-- `npm test`: aprovado — 75 testes no total, sem falhas.
+- `npm test`: aprovado — 76 testes no total após o fluxo de imagem remota com retenção curta, sem falhas.
 - Build de produção do Next.js e builds TypeScript: aprovados pela pipeline de testes.
 - `npm run typecheck`: aprovado.
 - `npm run lint`: aprovado.
@@ -62,6 +62,6 @@ Data: 2026-08-10
 
 ## Próxima etapa segura
 
-O projeto está pronto como `v0.1.0-rc.3` local no PR #2 da branch `codex/production-finish` para `main`. Siga `docs/RELEASE_HANDOFF.md`. Se o empacotamento legado `vinext` voltar a ser usado, ele deve ser migrado e auditado separadamente antes da execução. Certificação de credenciais reais, envio real e merge para produção permanecem fora deste checkpoint e exigem uma etapa separada e explicitamente autorizada.
+O projeto foi publicado como `v0.1.0-rc.3`: o PR #2 foi integrado em `main`, a CI passou no commit `405158bb3ab0f9c231d5abea067728b7e29129f2` e o deploy web correspondente está `READY` na Vercel. A entrega real continua desabilitada. O fluxo local posterior usa diretamente a imagem pública da Shopee durante a janela curta de retenção e bloqueia uploads manuais na produção, eliminando a exigência de Blob para o caso de uso aprovado. Essa mudança ainda precisa passar por novo PR/deploy. O aceite autenticado do banco, o worker permanente e a tag final `v0.1.0` permanecem pendentes; consulte `docs/RELEASE_HANDOFF.md`. Se o empacotamento legado `vinext` voltar a ser usado, ele deve ser migrado e auditado separadamente antes da execução.
 
 Não fazer deploy, push, reset do Docker, `prisma db push`, `prisma migrate reset` ou envio real.

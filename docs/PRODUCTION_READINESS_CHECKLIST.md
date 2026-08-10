@@ -4,7 +4,7 @@ This checklist is for a separately approved production environment. The local ho
 
 ## Release candidate evidence
 
-The local `v0.1.0-rc.3` candidate has passed 75 tests, lint, typecheck, production build, homologation preflight and the production-dependency audit. These results prepare the candidate but do not complete any production item below. GitHub publication, Vercel preview, production database backup, permanent worker provisioning and operational approval must still be verified in their target environments.
+The published `v0.1.0-rc.3` candidate passed 75 tests, lint, typecheck, production build, homologation preflight and the production-dependency audit. PR #2 is merged, CI passed on merge commit `405158bb3ab0f9c231d5abea067728b7e29129f2`, and the matching Vercel production deployment is `READY`. The subsequent local short-retention image-flow package passes 76 tests. Production database backup, authenticated health, permanent worker provisioning and operational approval remain pending.
 
 ## 1. Scope and approval
 
@@ -20,20 +20,21 @@ The local `v0.1.0-rc.3` candidate has passed 75 tests, lint, typecheck, producti
 - [ ] Configure `APP_ENCRYPTION_KEY`, `WORKER_API_TOKEN`, and `WORKER_HEALTH_TOKEN` with unique values of at least 24 characters.
 - [ ] Configure valid Shopee affiliate credentials and verify the official GraphQL endpoint.
 - [ ] Configure the WhatsApp session directory on a private persistent volume.
+- [ ] Confirm the Shopee image URL is reachable when queued and keep manual production file uploads disabled.
 - [ ] Confirm production flags are intentionally reviewed: `DEMO_MODE=false`, `PROVIDER_MODE=live`, `MOCK_PROVIDERS=false`, and `SEND_LIVE=true`.
-- [ ] Confirm the homologation flags remain `DEMO_MODE=true`, `PROVIDER_MODE=mock`, `MOCK_PROVIDERS=true`, and `SEND_LIVE=false`.
+- [x] Confirm the homologation flags remain `DEMO_MODE=true`, `PROVIDER_MODE=mock`, `MOCK_PROVIDERS=true`, and `SEND_LIVE=false`.
 
 ## 3. Database and application
 
 - [ ] Take and verify a restorable PostgreSQL backup.
 - [ ] Review every pending Prisma migration; use `prisma migrate deploy` only.
 - [ ] Never use `prisma db push` or `prisma migrate reset`.
-- [ ] Run typecheck, lint, build, unit tests, and the homologation preflight before promotion.
+- [x] Run typecheck, lint, build, unit tests, and the homologation preflight before promotion.
 - [ ] Confirm idempotency constraints and delivery history are present.
 
 ## 4. Deployment and observability
 
-- [ ] Build and deploy the web application through the approved Vercel workflow.
+- [x] Build and deploy the web application through the approved Vercel workflow.
 - [ ] Start exactly one production worker revision and verify its protected health endpoint returns HTTP 200.
 - [ ] Verify structured logs exclude secrets, message bodies, destinations, and authorization headers.
 - [ ] Confirm queue pause, retry, disconnect, and rollback controls are available before enabling delivery.

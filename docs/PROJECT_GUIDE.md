@@ -33,7 +33,7 @@ A configuração inicial da fila é uma publicação a cada 20 minutos, todos os
 
 ### Ainda necessário antes da operação real
 
-- infraestrutura permanente para PostgreSQL, worker e armazenamento de imagens;
+- infraestrutura permanente para PostgreSQL e worker; armazenamento de imagens somente se uploads manuais forem habilitados;
 - credenciais de produção da Shopee guardadas em um secret manager;
 - sessão WhatsApp criada no host permanente e grupo confirmado;
 - backup e restauração do PostgreSQL ensaiados;

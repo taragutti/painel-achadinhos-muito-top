@@ -2,6 +2,22 @@
 
 Todas as mudanças relevantes deste projeto são registradas neste arquivo.
 
+## [Não publicado]
+
+### Adicionado
+
+- Uso direto da imagem pública retornada pela Shopee, sem criar uma cópia permanente durante o salvamento do produto.
+- Bloqueio explícito de uploads manuais de arquivo na produção Vercel enquanto não houver armazenamento durável.
+
+### Corrigido
+
+- Node.js fixado em 24.x para evitar upgrade automático de major na Vercel.
+- Handoff, checklist e checkpoint atualizados com o merge, a CI e o deploy web realmente verificados.
+
+### Validado
+
+- 76 testes, lint, typecheck, build Next.js e auditoria de dependências de produção sem vulnerabilidades.
+
 ## [0.1.0-rc.3] - 2026-08-10
 
 ### Corrigido
