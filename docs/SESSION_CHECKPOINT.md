@@ -53,6 +53,8 @@ Data: 2026-08-10
 - `docker compose -f compose.worker.homologation.yaml config --quiet`: aprovado.
 - Imagem `painel-achadinhos-worker:local`: construída do zero com `npm ci`, builds dos quatro workspaces do runtime e zero vulnerabilidades na instalação do container.
 - Inspeção da imagem: usuário não-root `node`, healthcheck configurado, `DEMO_MODE=true`, `PROVIDER_MODE=mock`, `SEND_LIVE=false` e `WHATSAPP_ENABLED=false`.
+- Runtime da imagem validado em projeto Compose isolado: container saudável, endpoint protegido `/health` com HTTP 200 e log estruturado confirmando `mockProviders=true` e `sendLive=false`.
+- O container e a rede temporários foram removidos sem `-v`; o volume foi preservado e o PostgreSQL local voltou ao estado parado.
 
 ## Próxima etapa segura
 
